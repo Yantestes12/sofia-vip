@@ -123,9 +123,41 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
 
       {/* Full screen story viewer */}
       {activeStory && (
-        <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center animate-fade-in" onClick={() => setActiveStory(null)}>
+        <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center animate-fade-in">
+          {/* Tap zones for navigation - Left (back) / Right (forward) */}
+          <div className="absolute inset-0 z-40 flex">
+            <div 
+              className="w-[30%] h-full" 
+              onClick={(e) => {
+                e.stopPropagation();
+                // Go to previous available story
+                const availableStories = stories.filter(s => !s.isLocked || isVip);
+                const currentIdx = availableStories.findIndex(s => s.id === activeStory.id);
+                if (currentIdx > 0) {
+                  setActiveStory(availableStories[currentIdx - 1]);
+                  setProgress(0);
+                }
+              }}
+            />
+            <div 
+              className="w-[70%] h-full" 
+              onClick={(e) => {
+                e.stopPropagation();
+                // Go to next available story
+                const availableStories = stories.filter(s => !s.isLocked || isVip);
+                const currentIdx = availableStories.findIndex(s => s.id === activeStory.id);
+                if (currentIdx < availableStories.length - 1) {
+                  setActiveStory(availableStories[currentIdx + 1]);
+                  setProgress(0);
+                } else {
+                  setActiveStory(null); // Close when reaching the end
+                }
+              }}
+            />
+          </div>
+
           {/* Progress bars */}
-          <div className="absolute top-4 left-4 right-4 flex gap-1 z-30">
+          <div className="absolute top-4 left-4 right-4 flex gap-1 z-50">
             {stories.filter(s => !s.isLocked || isVip).map((story, idx) => {
               const activeIdx = stories.filter(s => !s.isLocked || isVip).findIndex(s => s.id === activeStory.id);
               return (
@@ -142,7 +174,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
           </div>
 
           {/* Header */}
-          <div className="absolute top-8 left-4 right-4 flex items-center justify-between z-30">
+          <div className="absolute top-8 left-4 right-4 flex items-center justify-between z-50">
             <div className="flex items-center gap-3">
               <img src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" className="w-9 h-9 rounded-full border-2 border-white/20 object-cover" alt="Sofia" />
               <div>
@@ -150,13 +182,12 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
                 <p className="text-white/50 text-[10px] font-medium">Agora</p>
               </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); setActiveStory(null); }} className="p-2 text-white/70 hover:text-white">
+            <button onClick={(e) => { e.stopPropagation(); setActiveStory(null); }} className="p-2 text-white/70 hover:text-white z-50">
               <X size={24} />
             </button>
           </div>
 
           {/* Media */}
-          <div className="absolute inset-0 z-10 bg-transparent pointer-events-none"></div>
           {activeStory.isVideo ? (
             <video 
               src={activeStory.mediaUrl} 
