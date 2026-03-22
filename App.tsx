@@ -10,6 +10,7 @@ import ExclusiveLeakPage from './components/ExclusiveLeakPage';
 import SubmundoVazado from './components/SubmundoVazado';
 import LeakAdCard from './components/LeakAdCard';
 import PaymentModal from './components/PaymentModal';
+import Stories from './components/Stories';
 import { TabType, CreatorProfile } from './types';
 
 const VIP_STORAGE_KEY = 'sofia_vip_access';
@@ -89,7 +90,7 @@ const App: React.FC = () => {
     name: "Sofia Oliveira",
     handle: "sofia_vip",
     bio: "Seja bem-vindo ao meu lado mais íntimo. Aqui não existem tabus. 🔥 Conteúdo exclusivo, fetiches e bastidores liberados para você, meu assinante VIP.",
-    age: 22,
+    age: 18,
     subscribers: "158.9k",
     location: "Rio de Janeiro, BR",
     tags: ["Amador", "Pés", "POV", "Sereia", "Caseiro"],
@@ -126,6 +127,8 @@ const App: React.FC = () => {
         isVip={isVip}
         onPurchase={() => setShowPaymentModal(true)}
       />
+
+      <Stories isVip={isVip} onOpenSubscription={() => setShowPaymentModal(true)} />
 
       <PaymentModal 
         isOpen={showPaymentModal} 

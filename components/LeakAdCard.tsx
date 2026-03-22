@@ -31,7 +31,7 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick }) => {
              </div>
           </div>
           <div className="absolute top-4 -right-10 bg-red-600 text-white text-[10px] font-black uppercase py-1.5 w-40 text-center rotate-[45deg] shadow-lg border-y border-white/20 tracking-widest">
-            VAZOU 2025
+            VAZOU 2026
           </div>
         </div>
 
