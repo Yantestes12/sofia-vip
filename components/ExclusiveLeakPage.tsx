@@ -25,49 +25,63 @@ const generateAccessId = () => {
   return result;
 };
 
+const N8N_WEBHOOK_URL = 'https://weebhooks.synio.com.br/webhook';
+
 const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, onDirectAccess: () => void }) => {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [pixData, setPixData] = useState<PixResponse | null>(null);
+  const [pixData, setPixData] = useState<{ qrcode: string, copiaCola: string, id: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(600);
 
-  const PUSHIN_PAY_TOKEN = "59981|gv8wRnSTtC0NXcQxxlbcwoZ2FkTrxOj92nyIrKJHa2f32dd0"; 
+  // Timer de expiração do PIX
+  useEffect(() => {
+    let timer: any;
+    if (pixData && timeLeft > 0) {
+      timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [pixData, timeLeft]);
 
+  // Gerar PIX via n8n webhook
   useEffect(() => {
     const createPix = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch('https://api.pushinpay.com.br/api/pix/cashIn', {
+        const response = await fetch(`${N8N_WEBHOOK_URL}/gerar-pix-nexuspag`, {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${PUSHIN_PAY_TOKEN}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            value: 2990,
-            split_rules: []
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ value: 29.90 })
         });
         
         const data = await response.json();
-        if (!response.ok) throw new Error(data?.message || 'Erro na API');
-        
-        // Registrar o ID no localStorage como pendente
-        try {
-          localStorage.setItem(`access_${accessId}`, JSON.stringify({
-            pix_id: data.id,
-            status: 'pending',
-            createdAt: new Date().toISOString()
-          }));
-        } catch (e) {
-          console.error('Erro ao salvar acesso:', e);
+
+        if (response.ok) {
+          const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
+          
+          if (tx && tx.qr_code_base64 && tx.pix_copia_cola) {
+            const pixInfo = {
+              qrcode: tx.qr_code_base64,
+              copiaCola: tx.pix_copia_cola,
+              id: tx.id || tx.txid || tx.uuid
+            };
+            setPixData(pixInfo);
+
+            // Salvar no localStorage como pendente
+            localStorage.setItem(`access_${accessId}`, JSON.stringify({
+              pix_id: pixInfo.id,
+              status: 'pending',
+              createdAt: new Date().toISOString()
+            }));
+          } else {
+            setError("Formato de PIX inválido recebido.");
+          }
+        } else {
+          setError("Erro ao comunicar com o servidor de pagamento.");
         }
-        
-        setPixData(data);
       } catch (err: any) {
         setError(err.message || 'Falha na conexão.');
       } finally {
@@ -77,31 +91,60 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
     createPix();
   }, [accessId]);
 
-  const handleVerifyPayment = async () => {
-    setIsVerifying(true);
+  // Polling automático a cada 5 segundos
+  useEffect(() => {
+    let interval: any;
+    if (pixData?.id) {
+      interval = setInterval(() => {
+        checkPaymentStatus(pixData.id, true);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [pixData]);
+
+  const checkPaymentStatus = async (txId: string, isSilent = false) => {
+    if (!isSilent) setIsVerifying(true);
+    
     try {
-      // Consulta o localStorage para ver se o status mudou para 'paid'
-      const stored = localStorage.getItem(`access_${accessId}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.status === 'paid') {
+      const response = await fetch(`${N8N_WEBHOOK_URL}/consultar-pix-nexuspag?id=${txId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
+        const status = tx?.status?.toUpperCase() || (data.status ? data.status.toUpperCase() : '');
+        
+        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
+          // Atualizar localStorage e confirmar
+          localStorage.setItem(`access_${accessId}`, JSON.stringify({
+            pix_id: txId,
+            status: 'paid',
+            paidAt: new Date().toISOString()
+          }));
           onConfirm(accessId);
-        } else {
-          alert("Pagamento ainda não compensado. Aguarde alguns instantes.");
+        } else if (!isSilent) {
+          alert("Pagamento ainda não identificado. Aguarde alguns instantes.");
         }
-      } else {
-        alert("Pagamento ainda não compensado. Aguarde alguns instantes.");
+      } else if (!isSilent) {
+        alert("Erro ao consultar status. Tente novamente.");
       }
     } catch (err) {
-      console.error(err);
+      if (!isSilent) {
+        alert("Falha ao verificar. Tente novamente.");
+      }
     } finally {
-      setIsVerifying(false);
+      if (!isSilent) setIsVerifying(false);
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   const handleCopy = () => {
-    if (pixData?.qr_code) {
-      navigator.clipboard.writeText(pixData.qr_code);
+    if (pixData?.copiaCola) {
+      navigator.clipboard.writeText(pixData.copiaCola);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -127,31 +170,32 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           {loading ? (
             <div className="py-16 flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-[#10b981] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Iniciando Transação Segura...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Gerando PIX R$ 29,90...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
               <AlertTriangle size={40} className="text-red-500 mx-auto mb-4" />
               <p className="text-zinc-800 font-black uppercase italic">Erro de Conexão</p>
+              <p className="text-zinc-400 text-xs mt-2">{error}</p>
               <button onClick={() => window.location.reload()} className="mt-6 bg-zinc-900 text-white px-8 py-3 rounded-xl text-xs font-black uppercase">Reiniciar</button>
             </div>
-          ) : (
+          ) : pixData ? (
             <>
               <div className="text-center mb-6">
                 <span className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">VALOR DO ACESSO</span>
                 <div className="text-5xl font-black text-zinc-900 italic tracking-tighter">R$ 29,90</div>
               </div>
               <div className="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm mb-6">
-                <img src={pixData?.qr_code_base64} alt="QR Code" className="w-48 h-48" />
+                <img src={pixData.qrcode} alt="QR Code" className="w-48 h-48 object-contain" />
               </div>
               <button onClick={handleCopy} className="w-full bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 rounded-2xl p-4 flex items-center justify-between mb-6 active:scale-95 transition-all">
                 <Copy size={18} className="text-zinc-400" />
-                <span className="text-[10px] font-mono font-bold text-zinc-500 truncate max-w-[150px] uppercase">{pixData?.qr_code.substring(0, 20)}...</span>
+                <span className="text-[10px] font-mono font-bold text-zinc-500 truncate max-w-[150px] uppercase">{pixData.copiaCola.substring(0, 20)}...</span>
                 <span className="text-[12px] font-black text-[#10b981] uppercase">{copied ? "COPIADO" : "COPIAR"}</span>
               </button>
               
               <button 
-                onClick={handleVerifyPayment} 
+                onClick={() => checkPaymentStatus(pixData.id)}
                 disabled={isVerifying}
                 className="w-full bg-[#10b981] text-white font-black uppercase py-5 rounded-2xl shadow-xl shadow-emerald-500/20 active:scale-95 transition-all text-sm mb-2 flex items-center justify-center gap-2"
               >
@@ -159,11 +203,16 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
                 {isVerifying ? "VERIFICANDO..." : "JÁ PAGUEI, LIBERAR SUBMUNDO"}
               </button>
 
-              <button onClick={onDirectAccess} className="mt-4 w-full bg-zinc-900/5 text-zinc-400 border border-zinc-200 border-dashed py-2 rounded-xl text-[10px] font-black uppercase hover:bg-zinc-900/10 transition-colors">
+              <div className="flex items-center justify-center gap-2 text-zinc-400 font-mono text-lg mt-4 mb-2">
+                <Timer className="w-5 h-5" /> {formatTime(timeLeft)}
+              </div>
+              <p className="text-zinc-400 text-[9px] mb-4 text-center">Verificação automática a cada 5s • Expira em 10 min</p>
+
+              <button onClick={onDirectAccess} className="w-full bg-zinc-900/5 text-zinc-400 border border-zinc-200 border-dashed py-2 rounded-xl text-[10px] font-black uppercase hover:bg-zinc-900/10 transition-colors">
                 [ DEBUG ] ATUALIZAR STATUS PARA PAGO
               </button>
             </>
-          )}
+          ) : null}
         </div>
         <div className="px-8 py-4 bg-zinc-50 border-t border-zinc-100 text-center">
           <p className="text-[8px] text-zinc-400 uppercase font-bold tracking-tighter">Esta chave ID é única e será vinculada ao seu dispositivo permanentemente.</p>
