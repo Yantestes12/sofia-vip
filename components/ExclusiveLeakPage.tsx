@@ -6,6 +6,7 @@ import SubmundoVazado from './SubmundoVazado';
 
 interface ExclusiveLeakPageProps {
   onBack: () => void;
+  leadLocation?: string;
 }
 
 interface PixResponse {
@@ -222,7 +223,9 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
   );
 };
 
-const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack }) => {
+const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocation }) => {
+  // Extrai só a cidade da localização (formato "Cidade, Estado")
+  const cityName = leadLocation ? leadLocation.split(',')[0].trim() : '';
   const [showPixModal, setShowPixModal] = useState(false);
   const [pendingId, setPendingId] = useState('');
   const [isUnlocked, setIsUnlocked] = useState(false);
@@ -305,7 +308,50 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack }) => {
           </div>
           <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-[0.85]">CONTEÚDO <br/> <span className="text-red-600">VAZADO</span></h1>
           <p className="text-zinc-400 text-sm md:text-lg max-w-xl mx-auto font-medium leading-relaxed">Os Vídeos mais bizarros do Submundo, aproveite antes que o acesso seja suspenso definitivamente!</p>
-          <div className="flex flex-col items-center gap-6 pt-10">
+          
+          {/* BONUS: Grupo VIP Garotas da Cidade */}
+          <div className="bg-gradient-to-b from-pink-950/40 to-zinc-950/80 border-2 border-pink-500/40 rounded-3xl p-6 md:p-8 max-w-md mx-auto relative overflow-hidden shadow-[0_0_40px_rgba(236,72,153,0.2)]">
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-600/5 to-purple-600/5"></div>
+            <div className="absolute top-3 right-3">
+              <span className="bg-pink-500 text-white text-[8px] font-black uppercase px-3 py-1 rounded-full tracking-widest animate-pulse shadow-lg">BÔNUS GRÁTIS</span>
+            </div>
+            
+            <div className="relative z-10 space-y-4">
+              <div className="w-14 h-14 bg-pink-500/20 rounded-full flex items-center justify-center mx-auto border border-pink-500/30">
+                <span className="text-2xl">📹</span>
+              </div>
+              
+              <h3 className="text-white font-black text-xl md:text-2xl uppercase italic tracking-tighter leading-tight">
+                GRUPO VIP DE <span className="text-pink-400">GAROTAS</span> <br/>{cityName ? `DE ${cityName.toUpperCase()}` : 'DA SUA CIDADE'}
+              </h3>
+              
+              <p className="text-zinc-300 text-sm leading-relaxed">
+                Ao liberar o acesso, você também entra no <span className="text-pink-400 font-bold">grupo exclusivo</span> com garotas reais {cityName ? `de ${cityName}` : 'da sua cidade'}, <span className="text-white font-bold">loucas para fazer chamada de vídeo</span> e se encontrar pessoalmente! 🔥
+              </p>
+
+              <div className="grid grid-cols-3 gap-2 py-2">
+                <div className="bg-black/40 rounded-xl p-3 border border-pink-500/20 text-center">
+                  <span className="text-lg">📱</span>
+                  <p className="text-[9px] text-pink-300 font-bold uppercase mt-1">Chamadas<br/>de Vídeo</p>
+                </div>
+                <div className="bg-black/40 rounded-xl p-3 border border-pink-500/20 text-center">
+                  <span className="text-lg">📍</span>
+                  <p className="text-[9px] text-pink-300 font-bold uppercase mt-1">Garotas<br/>Perto de Você</p>
+                </div>
+                <div className="bg-black/40 rounded-xl p-3 border border-pink-500/20 text-center">
+                  <span className="text-lg">🤫</span>
+                  <p className="text-[9px] text-pink-300 font-bold uppercase mt-1">Encontros<br/>Reais</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-bold">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                <span className="text-green-400">{Math.floor(Math.random() * 80 + 120)} garotas online agora {cityName ? `em ${cityName}` : 'na sua região'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center gap-6 pt-4">
             <div className="bg-zinc-900/80 border border-red-900/40 px-8 py-4 rounded-3xl backdrop-blur-xl flex flex-col items-center">
                <p className="text-[9px] text-zinc-500 uppercase font-black mb-1">O link de acesso expira em:</p>
                <div className="flex items-center gap-2 text-2xl font-black text-red-500"><Timer size={20} /><span>{formatTime(timeLeft)}</span></div>
@@ -317,6 +363,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack }) => {
                 <span className="text-white/60 text-sm">R$ 29,90</span>
               </div>
             </button>
+            <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">✅ Vazados + Grupo VIP de Garotas inclusos</p>
           </div>
         </div>
         <button onClick={onBack} className="absolute top-16 left-8 p-3 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all z-20"><ArrowLeft size={24} /></button>
