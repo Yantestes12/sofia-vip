@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { CreatorProfile } from '../types';
 import { MapPin, BadgeCheck, Gem, Lock } from './Icons';
 
@@ -65,9 +65,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
               </div>
               
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-zinc-300 mt-3">
+                {profile.location && (
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4 text-zinc-500" /> {profile.location}
                 </span>
+                )}
                 <span className="px-2 py-0.5 rounded bg-zinc-800 border border-zinc-700 text-xs font-semibold">
                   {profile.age} anos
                 </span>

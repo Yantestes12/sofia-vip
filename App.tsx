@@ -49,11 +49,34 @@ const App: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showLeakPortal, setShowLeakPortal] = useState(false);
   const [directAccessId, setDirectAccessId] = useState<string | null>(null);
+  const [leadLocation, setLeadLocation] = useState<string>('');
 
   // Verifica VIP no localStorage ao carregar
   useEffect(() => {
     const vipStatus = checkVipStatus();
     setIsVip(vipStatus);
+  }, []);
+
+  // Detecta localização do lead via IP
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        const res = await fetch('http://ip-api.com/json/?fields=status,country,countryCode,regionName,city');
+        const data = await res.json();
+        if (data.status === 'success' && data.countryCode === 'BR') {
+          if (data.city && data.regionName) {
+            setLeadLocation(`${data.city}, ${data.regionName}`);
+          } else if (data.regionName) {
+            setLeadLocation(data.regionName);
+          }
+          // Se não achar nem estado, fica vazio
+        }
+        // Se for de fora do BR, não mostra nada
+      } catch {
+        // Em caso de erro, não mostra localização
+      }
+    };
+    fetchLocation();
   }, []);
 
   // Verifica acesso direto via URL (?access=...)
@@ -92,7 +115,7 @@ const App: React.FC = () => {
     bio: "Seja bem-vindo ao meu lado mais íntimo. Aqui não existem tabus. 🔥 Conteúdo exclusivo, fetiches e bastidores liberados para você, meu assinante VIP.",
     age: 18,
     subscribers: "158.9k",
-    location: "Rio de Janeiro, BR",
+    location: leadLocation,
     tags: ["Amador", "Pés", "POV", "Sereia", "Caseiro"],
     avatarUrl: "https://secreto.meuprivacy.digital/acesso/foto22.jpg",
     bannerUrl: "https://secreto.meuprivacy.digital/acesso/foto5.jpg",
@@ -107,16 +130,16 @@ const App: React.FC = () => {
   }
 
   if (showLeakPortal) {
-    return <ExclusiveLeakPage onBack={() => setShowLeakPortal(false)} />;
+    return <ExclusiveLeakPage onBack={() => setShowLeakPortal(false)} leadLocation={leadLocation} />;
   }
 
   const renderContent = () => {
     switch (activeTab) {
       case 'photos': return <PhotoGrid onOpenSubscription={() => setShowPaymentModal(true)} isVip={isVip} />;
       case 'videos': return <VideoGallery onOpenSubscription={() => setShowPaymentModal(true)} isVip={isVip} />;
-      case 'live': return <LiveSection />;
+      case 'live': return <LiveSection isVip={isVip} onOpenSubscription={() => setShowPaymentModal(true)} />;
       case 'feed':
-      default: return <Feed onOpenSubscription={() => setShowPaymentModal(true)} isVip={isVip} />;
+      default: return <Feed onOpenSubscription={() => setShowPaymentModal(true)} onOpenVazados={() => setShowLeakPortal(true)} isVip={isVip} />;
     }
   };
 
@@ -134,6 +157,7 @@ const App: React.FC = () => {
         isOpen={showPaymentModal} 
         onClose={() => setShowPaymentModal(false)}
         onSuccess={handleVipSuccess}
+        leadLocation={leadLocation}
       />
 
       <Navigation 
@@ -151,7 +175,7 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
 
-      <LeakAdCard onClick={() => setShowLeakPortal(true)} />
+      <LeakAdCard onClick={() => setShowLeakPortal(true)} onVipClick={() => setShowPaymentModal(true)} />
 
       <footer className="py-12 text-center bg-zinc-950 text-zinc-700 text-xs border-t border-zinc-900 mt-10">
         <div className="px-4">

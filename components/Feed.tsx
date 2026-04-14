@@ -1,13 +1,129 @@
 
-import React from 'react';
-import { Heart, MessageCircle, Gem, Lock } from './Icons';
+import React, { useState, useEffect } from 'react';
+import { Heart, MessageCircle, Gem, Lock, ShieldAlert, AlertTriangle, X } from './Icons';
 
 interface FeedProps {
   onOpenSubscription: () => void;
+  onOpenVazados: () => void;
   isVip: boolean;
 }
 
-const Feed: React.FC<FeedProps> = ({ onOpenSubscription, isVip }) => {
+const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVip: () => void; variant: number }> = ({ onOpen, onClose, onOpenVip, variant }) => {
+  const [pulse, setPulse] = useState(true);
+
+  useEffect(() => {
+    const t = setInterval(() => setPulse(p => !p), 1500);
+    return () => clearInterval(t);
+  }, []);
+
+  const variants = [
+    {
+      title: "CONTEÚDO PESADO VAZOU",
+      subtitle: "Os vídeos mais proibidos do submundo acabaram de ser liberados...",
+      cta: "VER CONTEÚDOS VAZADOS",
+      badge: "⚠️ MATERIAL RESTRITO",
+      img: "https://secreto.meuprivacy.digital/acesso/foto6.jpg"
+    },
+    {
+      title: "VAZAMENTOS EXCLUSIVOS",
+      subtitle: "Material que deveria ter sido deletado... mas alguém salvou tudo antes.",
+      cta: "ACESSAR VAZADOS AGORA",
+      badge: "🔞 CONTEÚDO FORTE",
+      img: "https://secreto.meuprivacy.digital/acesso/foto20.jpg"
+    },
+    {
+      title: "ALERTA: NOVOS LEAKS",
+      subtitle: "Conteúdos fortíssimos recém-vazados. Assista antes que derrubem!",
+      cta: "LIBERAR ACESSO AGORA",
+      badge: "☠️ SUBMUNDO ATIVADO",
+      img: "https://secreto.meuprivacy.digital/acesso/foto24.jpg"
+    }
+  ];
+
+  const v = variants[variant % variants.length];
+
+  return (
+    <div className="relative bg-zinc-950 border-2 border-red-600 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.4)] animate-fade-in-up">
+      {/* Close button */}
+      <button 
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute top-3 right-3 z-30 bg-black/60 p-1.5 rounded-full text-zinc-400 hover:text-white transition-colors border border-zinc-700"
+      >
+        <X size={14} />
+      </button>
+
+      {/* Background image */}
+      <div className="relative h-48 md:h-56 w-full overflow-hidden">
+        <img 
+          src={v.img} 
+          alt="Leak" 
+          className="w-full h-full object-cover blur-[6px] opacity-40 scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-red-950/30"></div>
+        
+        {/* Pulsing lock icon */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className={`bg-red-600/90 p-5 rounded-full border-2 border-white/20 backdrop-blur-sm shadow-[0_0_30px_rgba(220,38,38,0.8)] ${pulse ? 'scale-110' : 'scale-100'} transition-transform duration-700`}>
+            <ShieldAlert className="w-10 h-10 text-white" />
+          </div>
+        </div>
+
+        {/* Ribbon */}
+        <div className="absolute top-4 -right-10 bg-red-600 text-white text-[9px] font-black uppercase py-1.5 w-40 text-center rotate-[45deg] shadow-lg border-y border-white/20 tracking-[2px]">
+          VAZOU 2026
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-6 text-center space-y-4 relative">
+        {/* Urgente Badge */}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-red-600 text-[10px] font-black uppercase px-5 py-1.5 rounded-full shadow-xl flex items-center gap-2 whitespace-nowrap">
+          <span className="w-1.5 h-1.5 bg-red-600 rounded-full animate-ping"></span> {v.badge}
+        </div>
+
+        <div className="pt-2">
+          <h3 className="text-white font-black text-2xl md:text-3xl uppercase italic tracking-tighter leading-[0.9]">
+            {v.title.split(' ').slice(0, -1).join(' ')} <span className="text-red-500">{v.title.split(' ').slice(-1)}</span>
+          </h3>
+        </div>
+
+        <p className="text-zinc-400 text-sm font-medium leading-snug max-w-sm mx-auto">
+          {v.subtitle}
+        </p>
+
+        <div className="flex items-center justify-center gap-3 text-[10px] text-zinc-500 font-black uppercase">
+          <span className="flex items-center gap-1"><AlertTriangle size={12} className="text-red-500" /> +18 APENAS</span>
+          <span>•</span>
+          <span className="text-red-500">ACESSO LIMITADO</span>
+        </div>
+
+        <button 
+          onClick={onOpen}
+          className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase text-sm py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)] hover:shadow-[0_0_50px_rgba(220,38,38,0.5)] active:scale-[0.97] flex items-center justify-center gap-3"
+        >
+          <ShieldAlert size={18} />
+          {v.cta}
+        </button>
+
+        <button 
+          onClick={onOpenVip}
+          className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black uppercase text-sm py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] active:scale-[0.97] flex items-center justify-center gap-2 mt-2"
+        >
+          <Gem size={16} className="fill-black" />
+          DESBLOQUEAR VIP — R$ 6,90
+        </button>
+
+        <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">
+          ⚡ {Math.floor(Math.random() * 300 + 500)} pessoas acessando agora
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip }) => {
+  const [dismissedPopups, setDismissedPopups] = useState<Set<number>>(new Set());
+
   const posts = [
     {
       id: 1,
@@ -133,9 +249,47 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, isVip }) => {
     }
   ];
 
+  // Build items list with Vazados popups inserted every 5 posts
+  const buildFeedItems = () => {
+    const items: { type: 'post' | 'vazados'; data?: any; popupIndex?: number }[] = [];
+    let popupCount = 0;
+
+    posts.forEach((post, idx) => {
+      items.push({ type: 'post', data: post });
+
+      // After every 5th post, insert a vazados popup
+      if ((idx + 1) % 5 === 0 && idx < posts.length - 1) {
+        items.push({ type: 'vazados', popupIndex: popupCount });
+        popupCount++;
+      }
+    });
+
+    return items;
+  };
+
+  const feedItems = buildFeedItems();
+
+  const handleDismiss = (popupIndex: number) => {
+    setDismissedPopups(prev => new Set(prev).add(popupIndex));
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-8 pb-12">
-      {posts.map((post) => {
+      {feedItems.map((item, idx) => {
+        if (item.type === 'vazados') {
+          if (dismissedPopups.has(item.popupIndex!)) return null;
+          return (
+            <VazadosPopup 
+              key={`vazados-${item.popupIndex}`} 
+              onOpen={onOpenVazados}
+              onOpenVip={onOpenSubscription}
+              onClose={() => handleDismiss(item.popupIndex!)}
+              variant={item.popupIndex!}
+            />
+          );
+        }
+
+        const post = item.data;
         const locked = post.isLocked && !isVip;
         return (
           <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
