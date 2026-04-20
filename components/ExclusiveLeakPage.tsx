@@ -26,7 +26,7 @@ const generateAccessId = () => {
   return result;
 };
 
-const N8N_WEBHOOK_URL = 'https://weebhooks.synio.com.br/webhook';
+const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
 const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, onDirectAccess: () => void }) => {
   const [copied, setCopied] = useState(false);
@@ -45,32 +45,60 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
     return () => clearInterval(timer);
   }, [pixData, timeLeft]);
 
-  // Gerar PIX via n8n webhook
+  // Gerar PIX diretamente via NexusPag (proxy Vercel)
   useEffect(() => {
     const createPix = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${N8N_WEBHOOK_URL}/gerar-pix-nexuspag`, {
+        console.log('[PIX-Leak] Chamando NexusPag via proxy Vercel...');
+        const response = await fetch('/api/pix/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ value: 29.90 })
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({ 
+            amount: 29.90,
+            webhook_url: 'https://weebhooks.synio.com.br/webhook/receber-nexuspag'
+          }),
+          signal: controller.signal
         });
         
-        const data = await response.json();
-        console.log('[PIX-Leak] Resposta bruta do webhook:', JSON.stringify(data, null, 2));
+        clearTimeout(timeout);
+        
+        const text = await response.text();
+        console.log('[PIX-Leak] Resposta bruta NexusPag:', text);
+        
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch (parseErr) {
+          console.error('[PIX-Leak] Falha ao parsear JSON:', text);
+          setError("Resposta inválida do servidor.");
+          return;
+        }
+
+        console.log('[PIX-Leak] Resposta parseada:', JSON.stringify(data, null, 2));
 
         if (response.ok) {
-          const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+          const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
           console.log('[PIX-Leak] Objeto tx extraído:', JSON.stringify(tx, null, 2));
           
-          // Resolve nomes de campo flexíveis — NexusPag pode usar qr_code para copia e cola
-          const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode;
-          const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste;
+          const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode || tx?.qr_code_image;
+          const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
           const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
           
-          console.log('[PIX-Leak] Campos resolvidos:', { qrCodeImage: qrCodeImage?.substring(0, 60), copiaCola: copiaCola?.substring(0, 60), txId });
+          console.log('[PIX-Leak] Campos resolvidos:', { 
+            qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
+            copiaCola: copiaCola ? copiaCola.substring(0, 80) + '...' : null, 
+            txId,
+            todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
+          });
 
           if (qrCodeImage && copiaCola) {
             const pixInfo = {
@@ -80,21 +108,27 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
             };
             setPixData(pixInfo);
 
-            // Salvar no localStorage como pendente
             localStorage.setItem(`access_${accessId}`, JSON.stringify({
               pix_id: pixInfo.id,
               status: 'pending',
               createdAt: new Date().toISOString()
             }));
           } else {
-            console.error('[PIX-Leak] Campos faltando! qrCodeImage:', !!qrCodeImage, 'copiaCola:', !!copiaCola, 'Chaves disponíveis:', tx ? Object.keys(tx) : 'tx é null');
-            setError("Formato de PIX inválido. Verifique o console (F12).");
+            console.error('[PIX-Leak] CAMPOS FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
+            setError("PIX criado mas campos faltando. Veja console F12.");
           }
         } else {
-          setError("Erro ao comunicar com o servidor de pagamento.");
+          console.error('[PIX-Leak] HTTP erro:', response.status, data);
+          setError(`Erro ${response.status}: ${data?.message || data?.error || 'Falha no servidor'}`);
         }
       } catch (err: any) {
-        setError(err.message || 'Falha na conexão.');
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+          console.error('[PIX-Leak] Timeout de 30s!');
+          setError("Timeout: servidor demorou demais. Recarregue a página.");
+        } else {
+          setError(err.message || 'Falha na conexão.');
+        }
       } finally {
         setLoading(false);
       }
@@ -117,16 +151,17 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
     if (!isSilent) setIsVerifying(true);
     
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/consultar-pix-nexuspag?id=${txId}`);
+      const response = await fetch(`/api/pix/${txId}`, {
+        headers: { 'x-api-key': API_KEY }
+      });
       const data = await response.json();
       console.log('[PIX-Leak] Consulta status:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
         const status = (tx?.status || data?.status || '').toUpperCase();
         
-        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
-          // Atualizar localStorage e confirmar
+        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO' || status === 'APPROVED') {
           localStorage.setItem(`access_${accessId}`, JSON.stringify({
             pix_id: txId,
             status: 'paid',

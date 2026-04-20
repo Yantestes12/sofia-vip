@@ -20,7 +20,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(6.90);
 
-  const N8N_WEBHOOK_URL = 'https://weebhooks.synio.com.br/webhook';
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
   // Extrai cidade da localização
@@ -91,36 +90,63 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Chama a NexusPag diretamente via proxy do Vercel (sem depender do n8n)
   const handleGeneratePix = async () => {
     setStep('loading');
     setErrorMsg("");
     
+    // Timeout de 30 segundos pra não ficar infinito
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/gerar-pix-nexuspag`, {
+      console.log('[PIX] Chamando NexusPag via proxy Vercel...');
+      const response = await fetch('/api/pix/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
         },
         body: JSON.stringify({
-          value: currentPrice,
-          apiKey: API_KEY
-        })
+          amount: currentPrice,
+          webhook_url: 'https://weebhooks.synio.com.br/webhook/receber-nexuspag'
+        }),
+        signal: controller.signal
       });
 
-      const data = await response.json();
-      console.log('[PIX] Resposta bruta do webhook:', JSON.stringify(data, null, 2));
+      clearTimeout(timeout);
+
+      const text = await response.text();
+      console.log('[PIX] Resposta bruta NexusPag:', text);
+      
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('[PIX] Falha ao parsear JSON:', text);
+        setErrorMsg("Resposta inválida do servidor.");
+        setStep('intro');
+        return;
+      }
+
+      console.log('[PIX] Resposta parseada:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        // Suporte a múltiplos formatos de resposta (NexusPag, n8n array wrap, etc.)
-        const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        // Suporte a múltiplos formatos de resposta
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
         console.log('[PIX] Objeto tx extraído:', JSON.stringify(tx, null, 2));
         
-        // Resolve nomes de campo flexíveis — NexusPag usa qr_code para copia e cola
-        const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode;
-        const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste;
+        // Resolve nomes de campo flexíveis
+        const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode || tx?.qr_code_image;
+        const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
         const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
         
-        console.log('[PIX] Campos resolvidos:', { qrCodeImage: qrCodeImage?.substring(0, 60), copiaCola: copiaCola?.substring(0, 60), txId });
+        console.log('[PIX] Campos resolvidos:', { 
+          qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
+          copiaCola: copiaCola ? copiaCola.substring(0, 80) + '...' : null, 
+          txId,
+          todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
+        });
 
         if (qrCodeImage && copiaCola) {
              setPixData({
@@ -130,36 +156,48 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
              });
              setStep('pix_generated');
         } else {
-             console.error('[PIX] Campos faltando! qrCodeImage:', !!qrCodeImage, 'copiaCola:', !!copiaCola, 'Chaves disponíveis:', tx ? Object.keys(tx) : 'tx é null');
-             setErrorMsg("Formato de PIX inválido. Verifique o console (F12) para debug.");
+             console.error('[PIX] CAMPOS FALTANDO! Todas as chaves do objeto:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
+             setErrorMsg("PIX criado mas campos faltando. Veja console F12.");
              setStep('intro');
         }
       } else {
-        setErrorMsg("Erro ao comunicar com o servidor de pagamento.");
+        console.error('[PIX] HTTP erro:', response.status, data);
+        setErrorMsg(`Erro ${response.status}: ${data?.message || data?.error || 'Falha no servidor'}`);
         setStep('intro');
       }
-    } catch (err) {
-      setErrorMsg("Erro de conexão. Tente novamente.");
+    } catch (err: any) {
+      clearTimeout(timeout);
+      if (err.name === 'AbortError') {
+        console.error('[PIX] Timeout de 30s atingido!');
+        setErrorMsg("Timeout: servidor demorou demais. Tente novamente.");
+      } else {
+        console.error('[PIX] Erro de conexão:', err);
+        setErrorMsg("Erro de conexão. Tente novamente.");
+      }
       setStep('intro');
     }
   };
 
+  // Consulta status diretamente na NexusPag via proxy Vercel
   const checkPaymentStatus = async (txId: string, isSilent = false) => {
     if (!isSilent) setStep('verifying');
     
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/consultar-pix-nexuspag?id=${txId}`, {
-        method: 'GET'
+      const response = await fetch(`/api/pix/${txId}`, {
+        method: 'GET',
+        headers: {
+          'x-api-key': API_KEY
+        }
       });
 
       const data = await response.json();
-      console.log('[PIX] Consulta status resposta:', JSON.stringify(data, null, 2));
+      console.log('[PIX] Consulta status:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
         const status = (tx?.status || data?.status || '').toUpperCase();
         
-        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
+        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO' || status === 'APPROVED') {
           setStep('success');
           setTimeout(() => {
             onSuccess();
