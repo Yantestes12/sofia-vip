@@ -108,19 +108,30 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
       });
 
       const data = await response.json();
+      console.log('[PIX] Resposta bruta do webhook:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
+        // Suporte a múltiplos formatos de resposta (NexusPag, n8n array wrap, etc.)
+        const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        console.log('[PIX] Objeto tx extraído:', JSON.stringify(tx, null, 2));
         
-        if (tx && tx.qr_code_base64 && tx.pix_copia_cola) {
+        // Resolve nomes de campo flexíveis — NexusPag usa qr_code para copia e cola
+        const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode;
+        const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste;
+        const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
+        
+        console.log('[PIX] Campos resolvidos:', { qrCodeImage: qrCodeImage?.substring(0, 60), copiaCola: copiaCola?.substring(0, 60), txId });
+
+        if (qrCodeImage && copiaCola) {
              setPixData({
-                 qrcode: tx.qr_code_base64,
-                 copiaCola: tx.pix_copia_cola,
-                 id: tx.id || tx.txid || tx.uuid
+                 qrcode: qrCodeImage.startsWith('data:') ? qrCodeImage : `data:image/png;base64,${qrCodeImage}`,
+                 copiaCola: copiaCola,
+                 id: txId
              });
              setStep('pix_generated');
         } else {
-             setErrorMsg("Formato de PIX inválido recebido.");
+             console.error('[PIX] Campos faltando! qrCodeImage:', !!qrCodeImage, 'copiaCola:', !!copiaCola, 'Chaves disponíveis:', tx ? Object.keys(tx) : 'tx é null');
+             setErrorMsg("Formato de PIX inválido. Verifique o console (F12) para debug.");
              setStep('intro');
         }
       } else {
@@ -142,10 +153,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
       });
 
       const data = await response.json();
+      console.log('[PIX] Consulta status resposta:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
-        const status = tx?.status?.toUpperCase() || (data.status ? data.status.toUpperCase() : '');
+        const tx = data.transaction || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        const status = (tx?.status || data?.status || '').toUpperCase();
         
         if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
           setStep('success');
