@@ -137,9 +137,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
         console.log('[PIX] Objeto tx extraído:', JSON.stringify(tx, null, 2));
         
         // Resolve nomes de campo flexíveis
-        const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode || tx?.qr_code_image;
         const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
         const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
+        
+        // QR code image: NexusPag retorna vazio, então geramos a partir do pix_copia_cola
+        let qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qr_code_image;
+        
+        // Se qr_code_base64 está vazio ou não existe, gera via API externa
+        if ((!qrCodeImage || qrCodeImage === '') && copiaCola) {
+          qrCodeImage = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(copiaCola)}`;
+          console.log('[PIX] QR code gerado via qrserver.com');
+        }
         
         console.log('[PIX] Campos resolvidos:', { 
           qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
@@ -148,16 +156,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
           todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
         });
 
-        if (qrCodeImage && copiaCola) {
+        if (copiaCola) {
              setPixData({
-                 qrcode: qrCodeImage.startsWith('data:') ? qrCodeImage : `data:image/png;base64,${qrCodeImage}`,
+                 qrcode: qrCodeImage && qrCodeImage.startsWith('data:') ? qrCodeImage : (qrCodeImage || ''),
                  copiaCola: copiaCola,
                  id: txId
              });
              setStep('pix_generated');
         } else {
-             console.error('[PIX] CAMPOS FALTANDO! Todas as chaves do objeto:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
-             setErrorMsg("PIX criado mas campos faltando. Veja console F12.");
+             console.error('[PIX] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
+             setErrorMsg("PIX criado mas código copia e cola não retornado.");
              setStep('intro');
         }
       } else {

@@ -89,10 +89,17 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
           console.log('[PIX-Leak] Objeto tx extraído:', JSON.stringify(tx, null, 2));
           
-          const qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qrcode || tx?.qr_code_image;
           const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
           const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
           
+          // QR code image: NexusPag retorna vazio, gera a partir do pix_copia_cola
+          let qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qr_code_image;
+          
+          if ((!qrCodeImage || qrCodeImage === '') && copiaCola) {
+            qrCodeImage = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(copiaCola)}`;
+            console.log('[PIX-Leak] QR code gerado via qrserver.com');
+          }
+
           console.log('[PIX-Leak] Campos resolvidos:', { 
             qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
             copiaCola: copiaCola ? copiaCola.substring(0, 80) + '...' : null, 
@@ -100,9 +107,9 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
             todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
           });
 
-          if (qrCodeImage && copiaCola) {
+          if (copiaCola) {
             const pixInfo = {
-              qrcode: qrCodeImage.startsWith('data:') ? qrCodeImage : `data:image/png;base64,${qrCodeImage}`,
+              qrcode: qrCodeImage && qrCodeImage.startsWith('data:') ? qrCodeImage : (qrCodeImage || ''),
               copiaCola: copiaCola,
               id: txId
             };
@@ -114,8 +121,8 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
               createdAt: new Date().toISOString()
             }));
           } else {
-            console.error('[PIX-Leak] CAMPOS FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
-            setError("PIX criado mas campos faltando. Veja console F12.");
+            console.error('[PIX-Leak] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null');
+            setError("PIX criado mas código copia e cola não retornado.");
           }
         } else {
           console.error('[PIX-Leak] HTTP erro:', response.status, data);
