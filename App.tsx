@@ -261,13 +261,45 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
 };
 
 // ====== FAKE SOFIA CHAT ======
-const CHAT_MESSAGES = [
-  { delay: 0, text: "Oi amor 😏", typing: 1500 },
-  { delay: 2500, text: "Gostou dos meus conteúdos? 💕", typing: 2000 },
-  { delay: 5500, text: "Tenho uns vídeos BEM mais ousados guardados... 🔥", typing: 2500 },
-  { delay: 9000, text: "Desbloqueia meu Segredinho que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
-  { delay: 13500, text: "É só R$ 4,50... me ajuda a pagar a faculdade 🥺", typing: 1500 },
+const CHAT_VARIATIONS = [
+  [
+    { delay: 0, text: "Oi amor 😏", typing: 1500 },
+    { delay: 2500, text: "Gostou dos meus conteúdos? 💕", typing: 2000 },
+    { delay: 5500, text: "Tenho uns vídeos BEM mais ousados guardados... 🔥", typing: 2500 },
+    { delay: 9000, text: "Desbloqueia meu Segredinho que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
+    { delay: 13500, text: "É só R$ 4,50... me ajuda a pagar a faculdade 🥺", typing: 1500 },
+  ],
+  [
+    { delay: 0, text: "Oiii 🥰", typing: 1200 },
+    { delay: 2000, text: "Que bom que você veio ver meus conteúdos...", typing: 2000 },
+    { delay: 5000, text: "Mas o melhor mesmo eu escondi no meu Segredinho 😈", typing: 2500 },
+    { delay: 8500, text: "São coisas que eu tenho muita vergonha de mostrar pra qualquer um 🙈💦", typing: 3000 },
+    { delay: 12500, text: "Desbloqueia vai... é R$ 4,50, menos que um pão com presunto 🥺", typing: 1800 },
+  ],
+  [
+    { delay: 0, text: "Ei você 👀", typing: 1000 },
+    { delay: 2000, text: "Tô vendo que tá curtindo né? 😏", typing: 1800 },
+    { delay: 4800, text: "Imagina o que eu guardo no meu Segredinho então... 🤫🔥", typing: 2500 },
+    { delay: 8300, text: "Vídeos que eu NUNCA postaria em lugar nenhum 😈", typing: 2200 },
+    { delay: 11500, text: "Me ajuda com R$ 4,50? Preciso pagar minha faculdade amor 📚🥺", typing: 2000 },
+  ],
+  [
+    { delay: 0, text: "Oi gatinho 😘", typing: 1300 },
+    { delay: 2300, text: "Sabia que você ia aparecer por aqui...", typing: 2000 },
+    { delay: 5300, text: "Quero te mostrar umas coisas que ninguém viu ainda 🤫", typing: 2500 },
+    { delay: 8800, text: "Tá tudo no meu Segredinho 😈 é meu conteúdo mais safado", typing: 2800 },
+    { delay: 12600, text: "São só R$ 4,50 pra desbloquear tudo... pra sempre 💕", typing: 1500 },
+  ],
+  [
+    { delay: 0, text: "Amor!! 💕", typing: 1000 },
+    { delay: 2000, text: "Obrigada por estar aqui comigo 🥰", typing: 1800 },
+    { delay: 4800, text: "Eu gravei uns vídeos muito ousados ontem... tô morrendo de vergonha 🙈", typing: 3000 },
+    { delay: 8800, text: "Coloquei tudo no Segredinho... só pra quem realmente me apoia 😈💦", typing: 2800 },
+    { delay: 12600, text: "R$ 4,50 e você vê TUDO... me ajuda na faculdade? 🥺📚", typing: 1800 },
+  ],
 ];
+
+const getRandomChat = () => CHAT_VARIATIONS[Math.floor(Math.random() * CHAT_VARIATIONS.length)];
 
 const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -292,7 +324,9 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
 
     const timeouts: NodeJS.Timeout[] = [];
 
-    CHAT_MESSAGES.forEach((msg, idx) => {
+    const chatMessages = getRandomChat();
+
+    chatMessages.forEach((msg, idx) => {
       // Mostra "digitando..." antes de cada mensagem
       timeouts.push(setTimeout(() => {
         setIsTyping(true);
