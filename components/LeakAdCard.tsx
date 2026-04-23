@@ -72,9 +72,9 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
 
              <button 
                onClick={(e) => { e.stopPropagation(); onVipClick(); }}
-               className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black rounded-xl py-3.5 flex items-center justify-center transition-colors shadow-[0_0_20px_rgba(251,191,36,0.3)] mt-2"
+               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white rounded-xl py-3.5 flex items-center justify-center transition-colors shadow-[0_0_20px_rgba(236,72,153,0.3)] mt-2"
              >
-               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={14} className="fill-black" /> DESBLOQUEAR VIP — R$ 6,90</span>
+               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={14} className="fill-white" /> SEGREDINHO — R$ 4,50</span>
              </button>
 
              <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest mt-3">
@@ -134,9 +134,9 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
 
              <button 
                onClick={(e) => { e.stopPropagation(); onVipClick(); }}
-               className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black rounded-xl py-3 flex items-center justify-center transition-colors shadow-lg mt-2"
+               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white rounded-xl py-3 flex items-center justify-center transition-colors shadow-lg mt-2"
              >
-               <span className="text-xs font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={12} className="fill-black" /> DESBLOQUEAR VIP</span>
+               <span className="text-xs font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={12} className="fill-white" /> SEGREDINHO 😈</span>
              </button>
           </div>
         </div>

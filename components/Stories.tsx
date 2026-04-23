@@ -22,15 +22,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
 
   const stories: StoryItem[] = [
     { id: 1, label: "Novo 🔥", thumb: "https://secreto.meuprivacy.digital/acesso/foto5.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto5.jpg", isVideo: false, isLocked: false },
-    { id: 2, label: "Peladinha", thumb: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", isVideo: false, isLocked: true },
-    { id: 3, label: "De costas 🍑", thumb: "https://secreto.meuprivacy.digital/acesso/foto2.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto2.jpg", isVideo: false, isLocked: false },
-    { id: 4, label: "Provador 🛍️", thumb: "https://secreto.meuprivacy.digital/acesso/foto4.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto4.jpg", isVideo: false, isLocked: true },
-    { id: 5, label: "Chuveiro 🚿", thumb: "https://secreto.meuprivacy.digital/acesso/foto20.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto20.jpg", isVideo: false, isLocked: true },
-    { id: 6, label: "Rebolando 💃", thumb: "https://secreto.meuprivacy.digital/acesso/foto21.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/video8.mp4", isVideo: true, isLocked: true },
-    { id: 7, label: "Calcinha ❤️", thumb: "https://secreto.meuprivacy.digital/acesso/foto24.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto24.jpg", isVideo: false, isLocked: false },
-    { id: 8, label: "Safadeza 😈", thumb: "https://secreto.meuprivacy.digital/acesso/foto44.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto44.jpg", isVideo: false, isLocked: true },
-    { id: 9, label: "Espelho 🪞", thumb: "https://secreto.meuprivacy.digital/acesso/foto45.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto45.jpg", isVideo: false, isLocked: true },
-    { id: 10, label: "Segredo 🤫", thumb: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", isVideo: false, isLocked: false },
+    { id: 2, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", isVideo: false, isLocked: true },
   ];
 
   const handleStoryClick = (story: StoryItem) => {
@@ -209,11 +201,11 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none"></div>
 
-          {/* VIP badge if unlocked */}
+          {/* Segredinho badge if unlocked */}
           {activeStory.isLocked && isVip && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 bg-amber-500/20 border border-amber-500/40 px-4 py-2 rounded-full flex items-center gap-2 backdrop-blur-md">
-              <Gem className="w-4 h-4 text-amber-400" />
-              <span className="text-amber-400 text-xs font-black uppercase">Conteúdo VIP</span>
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 bg-pink-500/20 border border-pink-500/40 px-4 py-2 rounded-full flex items-center gap-2 backdrop-blur-md">
+              <Gem className="w-4 h-4 text-pink-400" />
+              <span className="text-pink-400 text-xs font-black uppercase">Segredinho 😈</span>
             </div>
           )}
         </div>

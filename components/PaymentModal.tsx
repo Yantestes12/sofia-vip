@@ -19,9 +19,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [copied, setCopied] = useState(false);
   const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
-  // Timer de promoção: 8 minutos para R$6,90, depois R$14,00
+  // Timer de promoção: 8 minutos para R$4,50, depois R$9,90
   const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
-  const [currentPrice, setCurrentPrice] = useState(6.90);
+  const [currentPrice, setCurrentPrice] = useState(4.50);
 
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
@@ -47,10 +47,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
       if (remaining > 0) {
         setPromoSecondsLeft(remaining);
-        setCurrentPrice(6.90);
+        setCurrentPrice(4.50);
       } else {
         setPromoSecondsLeft(0);
-        setCurrentPrice(14.00);
+        setCurrentPrice(9.90);
       }
     };
 
@@ -68,7 +68,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
       setCopied(false);
       // Facebook Pixel: AddToCart event
       if (typeof window !== 'undefined' && (window as any).fbq) {
-        (window as any).fbq('track', 'AddToCart', { content_name: 'vip_sofia', value: currentPrice, currency: 'BRL' });
+        (window as any).fbq('track', 'AddToCart', { content_name: 'segredinho_sofia', value: currentPrice, currency: 'BRL' });
       }
     }
   }, [isOpen]);
@@ -173,7 +173,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
              setStep('pix_generated');
              // Facebook Pixel: InitiateCheckout event
              if (typeof window !== 'undefined' && (window as any).fbq) {
-               (window as any).fbq('track', 'InitiateCheckout', { content_name: 'vip_sofia', value: currentPrice, currency: 'BRL' });
+                (window as any).fbq('track', 'InitiateCheckout', { content_name: 'segredinho_sofia', value: currentPrice, currency: 'BRL' });
              }
         } else {
              console.error('[PIX] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
@@ -265,16 +265,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
         {step === 'intro' && (
           <div className="p-6 sm:p-8 text-center animate-fade-in-up mt-4">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/30">
-              <Lock className="w-8 h-8 text-amber-500" />
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/30">
+              <Lock className="w-8 h-8 text-pink-500" />
             </div>
             
             <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
-              CONTEÚDO PRIVADO
+              Meu Segredinho 😈
             </h2>
             
             <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
-              Desbloqueie agora o acesso VIP temporário ao perfil fechado da Sofia. Mídias exclusivas sem censura e conteúdos secretos.
+              Amor, esses são os meus conteúdos mais íntimos... coisas que eu <span className="text-white font-bold">tenho vergonha de postar</span> em qualquer lugar 🙈💦<br/><br/>
+              Me ajuda desbloqueando? O valor é só pro meu café na padaria e pão com presunto depois da faculdade 🥺📚
             </p>
 
             {/* Timer de promoção */}
@@ -290,7 +291,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                     <Timer className="w-5 h-5 text-green-400" />
                     <span className="text-green-400 font-mono font-black text-2xl">{formatTime(promoSecondsLeft)}</span>
                   </div>
-                  <p className="text-green-300/70 text-[10px] mt-2 font-bold">Após o tempo o valor será <span className="text-red-400 line-through">R$ 14,00</span></p>
+                  <p className="text-green-300/70 text-[10px] mt-2 font-bold">Após o tempo o valor será <span className="text-red-400 line-through">R$ 9,90</span></p>
                 </div>
               </div>
             ) : (
@@ -306,20 +307,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
             {/* Preço */}
             <div className="bg-zinc-950 rounded-xl p-4 mb-5 border border-zinc-800">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-zinc-400 text-sm font-medium">Acesso VIP Completo</span>
+                <span className="text-zinc-400 text-sm font-medium">Segredinho Completo 😈</span>
                 <div className="flex items-center gap-2">
                   {isPromoActive && (
-                    <span className="text-zinc-500 line-through text-xs">R$ 14,00</span>
+                    <span className="text-zinc-500 line-through text-xs">R$ 9,90</span>
                   )}
                   <span className="text-white font-black">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-zinc-400 text-sm font-medium">Lives Diárias Exclusivas</span>
+                <span className="text-zinc-400 text-sm font-medium">Vídeos Sem Censura</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-zinc-400 text-sm font-medium">Bônus Vazados</span>
+                <span className="text-zinc-400 text-sm font-medium">Fotos Proibidas</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
               <div className="h-px bg-zinc-800 my-3"></div>
@@ -329,26 +330,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
             </div>
 
-            {/* BÔNUS: Grupo de mulheres da cidade */}
+            {/* BÔNUS: Faculdade + ajuda */}
             <div className="bg-gradient-to-b from-pink-950/30 to-zinc-950/50 border border-pink-500/20 rounded-xl p-4 mb-5 text-left relative overflow-hidden">
-              <div className="absolute top-2 right-2">
-                <span className="bg-pink-500 text-white text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">BÔNUS</span>
-              </div>
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-pink-500/20 rounded-full flex items-center justify-center shrink-0 border border-pink-500/30 mt-0.5">
-                  <span className="text-lg">📹</span>
+                  <span className="text-lg">📚</span>
                 </div>
                 <div>
                   <h4 className="text-white font-black text-sm uppercase tracking-tight leading-tight">
-                    Grupo VIP de Mulheres {cityName ? `de ${cityName}` : 'da sua cidade'}
+                    Me ajuda a pagar minha faculdade 🥺
                   </h4>
                   <p className="text-zinc-400 text-[11px] leading-relaxed mt-1">
-                    Você também libera acesso ao <span className="text-pink-400 font-bold">grupo exclusivo</span> com mulheres safadas {cityName ? `de ${cityName}` : 'da sua região'}, <span className="text-white font-semibold">loucas para fazer chamada de vídeo e se encontrar</span> de graça, sempre que você quiser! 🔥
+                    Amor, o que é <span className="text-pink-400 font-bold">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>? O preço de um café na padaria com pão com presunto... <span className="text-white font-semibold">pra mim é a diferença entre continuar meus estudos ou ter que largar tudo</span> 😢
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-[9px] font-bold">{onlineCount} mulheres online agora</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -359,9 +353,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
             <button 
               onClick={handleGeneratePix}
-              className="w-full py-4 px-6 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              LIBERAR ACESSO VIP — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-black" />
+              😈 DESBLOQUEAR SEGREDINHO — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-white" />
             </button>
             <div className="flex items-center justify-center gap-2 mt-4 text-zinc-500 text-xs font-medium">
               <ShieldAlert className="w-4 h-4" /> Pagamento 100% Seguro e Anônimo
@@ -439,8 +433,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
              <div className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center mb-6">
                  <CheckCircle2 className="w-10 h-10 text-green-500" />
              </div>
-             <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-2">PAGAMENTO APROVADO!</h3>
-             <p className="text-zinc-400">Liberando seu acesso VIP...</p>
+              <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-2">PAGAMENTO APROVADO!</h3>
+              <p className="text-zinc-400">Liberando seu Segredinho 😈...</p>
           </div>
         )}
 
@@ -449,7 +443,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
             {/* Header verde de sucesso */}
             <div className="flex items-center justify-center gap-2 mb-4">
               <CheckCircle2 className="w-5 h-5 text-green-500" />
-              <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">VIP ATIVADO COM SUCESSO</span>
+              <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">SEGREDINHO DESBLOQUEADO 😈</span>
             </div>
 
             {/* Separador */}
@@ -488,7 +482,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                     <span className="text-zinc-500 line-through text-lg">R$ 89,00</span>
                     <span className="text-red-500 font-black text-3xl">R$ 29,90</span>
                   </div>
-                  <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só para quem acabou de assinar VIP</p>
+                  <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só pra quem desbloqueou o Segredinho</p>
                 </div>
               </div>
             </div>

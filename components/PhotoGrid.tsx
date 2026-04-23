@@ -68,7 +68,7 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
               {locked ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
                   <Lock className="w-6 h-6 text-white mb-1 drop-shadow-lg" />
-                  <span className="bg-amber-400 text-black px-2 py-0.5 rounded-md font-black text-[8px] uppercase">VIP</span>
+                  <span className="bg-pink-500 text-white px-2 py-0.5 rounded-md font-black text-[8px] uppercase">😈</span>
                 </div>
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2 z-10">

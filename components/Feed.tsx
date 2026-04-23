@@ -114,10 +114,10 @@ const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVi
 
         <button 
           onClick={onOpenVip}
-          className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black uppercase text-sm py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] active:scale-[0.97] flex items-center justify-center gap-2 mt-2"
+          className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-[0.97] flex items-center justify-center gap-2 mt-2"
         >
-          <Gem size={16} className="fill-black" />
-          DESBLOQUEAR VIP — R$ 6,90
+          <Gem size={16} className="fill-white" />
+          DESBLOQUEAR SEGREDINHO — R$ 4,50
         </button>
 
         <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">
@@ -306,8 +306,8 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip })
                 <img src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" className="w-12 h-12 rounded-full border-2 border-zinc-800" alt="Sofia" />
               </div>
               {post.isLocked && isVip && (
-                <div className="bg-amber-500/10 text-amber-500 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 border border-amber-500/20">
-                  <Gem size={10} /> VIP DESBLOQUEADO
+                <div className="bg-pink-500/10 text-pink-500 px-3 py-1 rounded-full text-[10px] font-black flex items-center gap-1 border border-pink-500/20">
+                  <Gem size={10} /> SEGREDINHO DESBLOQUEADO 😈
                 </div>
               )}
             </div>
@@ -331,13 +331,13 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip })
                     <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
                        <Lock className="w-8 h-8 text-amber-400" />
                     </div>
-                    <h3 className="text-white font-black text-xl uppercase italic mb-2 tracking-tighter">CONTEÚDO EXCLUSIVO</h3>
-                    <p className="text-zinc-400 text-xs mb-6 font-medium">Você precisa ser VIP para espiar isso.</p>
+                    <h3 className="text-white font-black text-xl uppercase italic mb-2 tracking-tighter">CONTEÚDO DO SEGREDINHO 😈</h3>
+                    <p className="text-zinc-400 text-xs mb-6 font-medium">Desbloqueia meu segredinho pra ver isso...</p>
                     <button 
                        onClick={onOpenSubscription} 
-                       className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black py-3 rounded-xl font-black uppercase text-sm transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex justify-center items-center gap-2"
+                       className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white py-3 rounded-xl font-black uppercase text-sm transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex justify-center items-center gap-2"
                     >
-                       ASSINAR POR R$ 6,90 <Gem size={16} className="fill-black" />
+                       DESBLOQUEAR POR R$ 4,50 <Gem size={16} className="fill-white" />
                     </button>
                   </div>
                 </div>

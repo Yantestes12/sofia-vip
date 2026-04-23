@@ -13,11 +13,13 @@ import PaymentModal from './components/PaymentModal';
 import Stories from './components/Stories';
 import { TabType, CreatorProfile } from './types';
 
-const VIP_STORAGE_KEY = 'sofia_vip_access';
+const WELCOME_SEEN_KEY = 'sofia_welcome_seen';
+
+const VIP_STORAGE_KEY = 'sofia_segredinho_access';
 
 // ====== SOCIAL PROOF TOAST ======
 const FIRST_NAMES = ['Lucas','Pedro','João','Carlos','Bruno','Felipe','Gustavo','Rafael','Mateus','André','Daniel','Gabriel','Diego','Marcos','Thiago','Leonardo','Ricardo','Eduardo','Rodrigo','Victor'];
-const ACTIONS_VIP = ['assinou o VIP','desbloqueou o conteúdo','virou membro VIP'];
+const ACTIONS_VIP = ['desbloqueou o Segredinho','liberou os conteúdos','virou membro especial'];
 const ACTIONS_SUB = ['acessou o Submundo','liberou os Vazados','desbloqueou tudo'];
 
 const SocialProofToast: React.FC<{ cityName: string }> = ({ cityName }) => {
@@ -221,32 +223,32 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
         </div>
 
         <div className="p-6 text-center space-y-4 -mt-4 relative">
-          <div className="inline-flex items-center gap-2 bg-amber-500 text-black text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest animate-pulse">
+          <div className="inline-flex items-center gap-2 bg-pink-500 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full tracking-widest animate-pulse">
             ⚡ ÚLTIMA CHANCE
           </div>
 
           <h3 className="text-white font-black text-xl uppercase tracking-tight leading-tight">
             Já vai embora? 😢<br/>
-            <span className="text-amber-400">Tenho algo especial pra você</span>
+            <span className="text-pink-400">Desbloqueia meu Segredinho 😈</span>
           </h3>
 
           <p className="text-zinc-400 text-sm leading-relaxed">
-            Acesso VIP ao meu perfil completo por um preço que <span className="text-white font-bold">eu nunca mais vou oferecer</span>:
+            Meus conteúdos mais íntimos por um preço que <span className="text-white font-bold">eu nunca mais vou oferecer</span>... me ajuda a pagar minha faculdade? 🥺
           </p>
 
-          <div className="bg-zinc-950 rounded-xl p-4 border border-amber-500/20">
+          <div className="bg-zinc-950 rounded-xl p-4 border border-pink-500/20">
             <div className="flex items-center justify-center gap-3">
-              <span className="text-zinc-500 line-through text-lg">R$ 14,00</span>
-              <span className="text-amber-400 font-black text-4xl">R$ 4,90</span>
+              <span className="text-zinc-500 line-through text-lg">R$ 9,90</span>
+              <span className="text-pink-400 font-black text-4xl">R$ 4,50</span>
             </div>
-            <p className="text-amber-400/60 text-[9px] mt-1 font-bold uppercase">Oferta exclusiva de saída • Não vai aparecer de novo</p>
+            <p className="text-pink-400/60 text-[9px] mt-1 font-bold uppercase">Oferta exclusiva de saída • Não vai aparecer de novo</p>
           </div>
 
           <button
             onClick={() => { setShow(false); onSubscribe(); }}
-            className="w-full py-4 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(251,191,36,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            🔓 QUERO MEU ACESSO POR R$ 4,90
+            😈 QUERO O SEGREDINHO POR R$ 4,50
           </button>
 
           <button onClick={() => setShow(false)} className="text-zinc-600 text-xs font-bold uppercase hover:text-zinc-400 transition-colors">
@@ -261,10 +263,10 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
 // ====== FAKE SOFIA CHAT ======
 const CHAT_MESSAGES = [
   { delay: 0, text: "Oi amor 😏", typing: 1500 },
-  { delay: 2500, text: "Vi que você tá no meu perfil...", typing: 2000 },
-  { delay: 5500, text: "Quer ver meus vídeos sem censura? 🔥", typing: 2500 },
-  { delay: 9000, text: "Assina o VIP que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
-  { delay: 13500, text: "É rapidinho, só R$ 6,90 pelo PIX", typing: 1500 },
+  { delay: 2500, text: "Gostou dos meus conteúdos? 💕", typing: 2000 },
+  { delay: 5500, text: "Tenho uns vídeos BEM mais ousados guardados... 🔥", typing: 2500 },
+  { delay: 9000, text: "Desbloqueia meu Segredinho que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
+  { delay: 13500, text: "É só R$ 4,50... me ajuda a pagar a faculdade 🥺", typing: 1500 },
 ];
 
 const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) => {
@@ -373,7 +375,7 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
               onClick={() => { setIsOpen(false); onSubscribe(); }}
               className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black uppercase text-xs rounded-xl active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
             >
-              🔓 ASSINAR VIP — R$ 6,90
+              🤫 DESBLOQUEAR SEGREDINHO — R$ 4,50
             </button>
           </div>
         </div>
@@ -413,7 +415,7 @@ const ReturnVisitorBanner: React.FC<{ onSubscribe: () => void }> = ({ onSubscrib
     <div className="fixed top-0 left-0 right-0 z-[100] animate-fade-in">
       <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-3 flex items-center justify-center gap-3 shadow-lg">
         <span className="text-black text-xs sm:text-sm font-black uppercase text-center leading-tight">
-          🎉 BEM-VINDO DE VOLTA! VIP por <span className="line-through opacity-60">R$ 6,90</span> <span className="text-lg">R$ 4,90</span>
+          🎉 BEM-VINDO DE VOLTA! Segredinho por <span className="line-through opacity-60">R$ 9,90</span> <span className="text-lg">R$ 4,50</span>
         </span>
         <button
           onClick={() => { handleDismiss(); onSubscribe(); }}
@@ -455,6 +457,100 @@ const activateVip = (): void => {
   localStorage.setItem(VIP_STORAGE_KEY, JSON.stringify(vipData));
 };
 
+// ====== WELCOME ONBOARDING FLOW ======
+const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const [step, setStep] = useState<'obrigado' | 'video' | 'done'>('obrigado');
+
+  const handleNext = () => {
+    if (step === 'obrigado') {
+      setStep('video');
+    } else {
+      sessionStorage.setItem(WELCOME_SEEN_KEY, '1');
+      onComplete();
+    }
+  };
+
+  if (step === 'obrigado') {
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 animate-fade-in">
+        <div className="max-w-md w-full text-center space-y-8">
+          {/* Coração animado */}
+          <div className="text-6xl animate-bounce">💕</div>
+          
+          {/* Foto da Sofia */}
+          <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-pink-500/50 shadow-[0_0_40px_rgba(236,72,153,0.3)]">
+            <img 
+              src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" 
+              alt="Sofia" 
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          {/* Mensagem de agradecimento */}
+          <div className="space-y-3">
+            <h1 className="text-white font-black text-2xl md:text-3xl leading-tight">
+              Muito obrigado por ter comprado meus conteúdos, amor! 💕
+            </h1>
+            <p className="text-zinc-400 text-sm leading-relaxed">
+              Fico tão feliz que você decidiu me conhecer melhor...<br/>
+              Preparei tudo com muito carinho pra você 🥰
+            </p>
+          </div>
+
+          {/* Botão próximo */}
+          <button 
+            onClick={handleNext}
+            className="w-full max-w-xs mx-auto py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-3"
+          >
+            Próximo →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Step 2: Video + texto sobre o Segredinho
+  return (
+    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 animate-fade-in">
+      <div className="max-w-md w-full text-center space-y-6">
+        {/* Vídeo preview */}
+        <div className="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl aspect-[9/16] max-h-[50vh] mx-auto">
+          <video 
+            src="https://secreto.meuprivacy.digital/acesso/video3.mp4"
+            autoPlay 
+            loop 
+            muted 
+            playsInline
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+        </div>
+
+        {/* Texto explicativo */}
+        <div className="space-y-3 px-2">
+          <p className="text-white text-base leading-relaxed font-medium">
+            Amor, vou te deixar ver <span className="text-pink-400 font-bold">várias coisas liberadas</span> aqui no meu perfil... 🔥
+          </p>
+          <p className="text-zinc-400 text-sm leading-relaxed">
+            Mas os meus <span className="text-white font-bold">melhores conteúdos</span>, aqueles que eu tenho vergonha de postar... estão no meu <span className="text-pink-400 font-black">Segredinho 😈</span>
+          </p>
+          <p className="text-zinc-500 text-xs leading-relaxed">
+            É um valor único que você paga só uma vez e me ajuda a pagar minha faculdade 🥺📚
+          </p>
+        </div>
+
+        {/* Botão próximo */}
+        <button 
+          onClick={handleNext}
+          className="w-full max-w-xs mx-auto py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-3"
+        >
+          Ver meus conteúdos 🔥
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('feed');
   const [isVip, setIsVip] = useState(false);
@@ -463,6 +559,7 @@ const App: React.FC = () => {
   const [directAccessId, setDirectAccessId] = useState<string | null>(null);
   const [leadLocation, setLeadLocation] = useState<string>('');
   const [showGroupOffer, setShowGroupOffer] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(() => !sessionStorage.getItem(WELCOME_SEEN_KEY));
 
   // Verifica VIP no localStorage ao carregar
   useEffect(() => {
@@ -513,7 +610,7 @@ const App: React.FC = () => {
     if (showLeakPortal || directAccessId) {
       document.title = "SISTEMA_VAZADOS_ROOT";
     } else {
-      document.title = "Sofia Oliveira | Perfil VIP";
+      document.title = "Sofia Oliveira | Conteúdos Exclusivos";
     }
   }, [showLeakPortal, directAccessId]);
 
@@ -529,8 +626,8 @@ const App: React.FC = () => {
   const profileData: CreatorProfile = {
     name: "Sofia Oliveira",
     handle: "sofia_vip",
-    bio: "Seja bem-vindo ao meu lado mais íntimo. Aqui não existem tabus. 🔥 Conteúdo exclusivo, fetiches e bastidores liberados para você, meu assinante VIP.",
-    age: 18,
+    bio: "Obrigado por ter comprado meus conteúdos amor 💕 Aqui você vai ver meu lado mais íntimo... e se desbloquear meu Segredinho 😈, te mostro TUDO sem censura.",
+    age: 19,
     subscribers: "158.9k",
     location: leadLocation,
     tags: ["Amador", "Pés", "POV", "Sereia", "Caseiro"],
@@ -538,6 +635,11 @@ const App: React.FC = () => {
     bannerUrl: "https://secreto.meuprivacy.digital/acesso/foto5.jpg",
     socials: { instagram: "#", telegram: "#", twitter: "#" }
   };
+
+  // Welcome flow: mostra antes de tudo
+  if (showWelcome && !directAccessId && !showLeakPortal) {
+    return <WelcomeFlow onComplete={() => setShowWelcome(false)} />;
+  }
 
   if (directAccessId) {
     return <SubmundoVazado accessId={directAccessId} onBack={() => {
@@ -604,14 +706,14 @@ const App: React.FC = () => {
       {/* Group Offer Modal */}
       <GroupOfferModal isOpen={showGroupOffer} onClose={() => setShowGroupOffer(false)} cityName={cityName} />
 
-      {/* Sticky CTA Bar (só pra não-VIP) */}
+      {/* Sticky CTA Bar (só pra quem não desbloqueou o Segredinho) */}
       {!isVip && !showPaymentModal && (
         <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-md px-4 py-3 animate-fade-in">
           <button 
             onClick={() => setShowPaymentModal(true)}
-            className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(251,191,36,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            🔓 DESBLOQUEAR VIP — R$ 6,90
+            😈 DESBLOQUEAR SEGREDINHO — R$ 4,50
           </button>
         </div>
       )}

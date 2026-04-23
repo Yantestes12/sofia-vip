@@ -77,7 +77,7 @@ const LiveSection: React.FC<LiveSectionProps> = ({ isVip, onOpenSubscription }) 
             </h2>
             
             <p className="text-zinc-300 text-sm md:text-base leading-relaxed mb-6">
-              Tenha acesso às <span className="text-amber-400 font-bold">lives diárias</span> comigo se tornando <span className="text-white font-bold">membro VIP</span>. Eu fico ao vivo todos os dias fazendo tudo que vocês pedem... sem censura nenhuma. 🔥
+              Tenha acesso às <span className="text-pink-400 font-bold">lives diárias</span> comigo desbloqueando meu <span className="text-white font-bold">Segredinho 😈</span>. Eu fico ao vivo todos os dias fazendo tudo que vocês pedem... sem censura nenhuma. 🔥
             </p>
 
             {/* Info badges */}
@@ -102,7 +102,7 @@ const LiveSection: React.FC<LiveSectionProps> = ({ isVip, onOpenSubscription }) 
               className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black py-4 rounded-xl font-black uppercase text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(251,191,36,0.3)] flex justify-center items-center gap-3"
             >
               <Gem size={18} className="fill-black" />
-              ASSINAR VIP E ASSISTIR AO VIVO
+              DESBLOQUEAR SEGREDINHO E ASSISTIR
             </button>
             
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-3">
