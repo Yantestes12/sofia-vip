@@ -21,16 +21,16 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
   const [progress, setProgress] = useState(0);
 
   const stories: StoryItem[] = [
-    { id: 1, label: "Hoje 🔥", thumb: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", isVideo: false, isLocked: false },
-    { id: 2, label: "Bastidores", thumb: "https://secreto.meuprivacy.digital/acesso/foto3.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto3.jpg", isVideo: false, isLocked: true },
-    { id: 3, label: "Sem roupa", thumb: "https://secreto.meuprivacy.digital/acesso/foto8.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto8.jpg", isVideo: false, isLocked: false },
-    { id: 4, label: "Provador 🛍️", thumb: "https://secreto.meuprivacy.digital/acesso/foto12.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto12.jpg", isVideo: false, isLocked: true },
-    { id: 5, label: "Chuveiro 🚿", thumb: "https://secreto.meuprivacy.digital/acesso/foto15.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto15.jpg", isVideo: false, isLocked: false },
-    { id: 6, label: "Lingerie ❤️", thumb: "https://secreto.meuprivacy.digital/acesso/foto19.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto19.jpg", isVideo: false, isLocked: true },
-    { id: 7, label: "Na cama 🛏️", thumb: "https://secreto.meuprivacy.digital/acesso/foto22.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto22.jpg", isVideo: false, isLocked: false },
-    { id: 8, label: "Espelho 🪞", thumb: "https://secreto.meuprivacy.digital/acesso/foto27.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto27.jpg", isVideo: false, isLocked: true },
-    { id: 9, label: "Safadeza 😈", thumb: "https://secreto.meuprivacy.digital/acesso/foto33.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto33.jpg", isVideo: false, isLocked: false },
-    { id: 10, label: "Segredo 🤫", thumb: "https://secreto.meuprivacy.digital/acesso/foto40.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto40.jpg", isVideo: false, isLocked: true },
+    { id: 1, label: "Novo 🔥", thumb: "https://secreto.meuprivacy.digital/acesso/foto5.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto5.jpg", isVideo: false, isLocked: false },
+    { id: 2, label: "Peladinha", thumb: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto6.jpg", isVideo: false, isLocked: true },
+    { id: 3, label: "De costas 🍑", thumb: "https://secreto.meuprivacy.digital/acesso/foto2.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto2.jpg", isVideo: false, isLocked: false },
+    { id: 4, label: "Provador 🛍️", thumb: "https://secreto.meuprivacy.digital/acesso/foto4.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto4.jpg", isVideo: false, isLocked: true },
+    { id: 5, label: "Chuveiro 🚿", thumb: "https://secreto.meuprivacy.digital/acesso/foto20.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto20.jpg", isVideo: false, isLocked: true },
+    { id: 6, label: "Rebolando 💃", thumb: "https://secreto.meuprivacy.digital/acesso/foto21.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/video8.mp4", isVideo: true, isLocked: true },
+    { id: 7, label: "Calcinha ❤️", thumb: "https://secreto.meuprivacy.digital/acesso/foto24.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto24.jpg", isVideo: false, isLocked: false },
+    { id: 8, label: "Safadeza 😈", thumb: "https://secreto.meuprivacy.digital/acesso/foto44.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto44.jpg", isVideo: false, isLocked: true },
+    { id: 9, label: "Espelho 🪞", thumb: "https://secreto.meuprivacy.digital/acesso/foto45.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto45.jpg", isVideo: false, isLocked: true },
+    { id: 10, label: "Segredo 🤫", thumb: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", isVideo: false, isLocked: false },
   ];
 
   const handleStoryClick = (story: StoryItem) => {

@@ -7,14 +7,17 @@ interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onOpenVazados?: () => void;
   leadLocation?: string;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, leadLocation }) => {
-  const [step, setStep] = useState<'intro' | 'loading' | 'pix_generated' | 'verifying' | 'success'>('intro');
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, onOpenVazados, leadLocation }) => {
+  const [step, setStep] = useState<'intro' | 'loading' | 'pix_generated' | 'verifying' | 'success' | 'upsell'>('intro');
   const [timeLeft, setTimeLeft] = useState(600);
   const [pixData, setPixData] = useState<{ qrcode: string, copiaCola: string, id: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
   // Timer de promoção: 8 minutos para R$6,90, depois R$14,00
   const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
@@ -62,6 +65,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
       setPixData(null);
       setTimeLeft(600);
       setErrorMsg("");
+      setCopied(false);
+      // Facebook Pixel: AddToCart event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'AddToCart', { content_name: 'vip_sofia', value: currentPrice, currency: 'BRL' });
+      }
     }
   }, [isOpen]);
 
@@ -163,6 +171,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                  id: txId
              });
              setStep('pix_generated');
+             // Facebook Pixel: InitiateCheckout event
+             if (typeof window !== 'undefined' && (window as any).fbq) {
+               (window as any).fbq('track', 'InitiateCheckout', { content_name: 'vip_sofia', value: currentPrice, currency: 'BRL' });
+             }
         } else {
              console.error('[PIX] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
              setErrorMsg("PIX criado mas código copia e cola não retornado.");
@@ -207,10 +219,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
         
         if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO' || status === 'APPROVED') {
           setStep('success');
+          // Ativa VIP imediatamente
+          onSuccess();
+          // Depois de 2.5s mostra upsell
           setTimeout(() => {
-            onSuccess();
-            onClose();
-          }, 2000);
+            setStep('upsell');
+          }, 2500);
         } else if (!isSilent) {
           setErrorMsg("Pagamento ainda não identificado.");
           setStep('pix_generated');
@@ -230,7 +244,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const copyToClipboard = () => {
     if (pixData) {
       navigator.clipboard.writeText(pixData.copiaCola);
-      alert("Chave Pix Copiada!");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     }
   };
 
@@ -332,7 +347,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                   </p>
                   <div className="flex items-center gap-2 mt-2">
                     <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-[9px] font-bold">{Math.floor(Math.random() * 60 + 80)} mulheres online agora</span>
+                    <span className="text-green-400 text-[9px] font-bold">{onlineCount} mulheres online agora</span>
                   </div>
                 </div>
               </div>
@@ -387,9 +402,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                        />
                        <button 
                           onClick={copyToClipboard}
-                          className="px-3 shrink-0 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors flex items-center gap-1 uppercase text-[10px] font-bold"
+                          className={`px-3 shrink-0 py-2 ${copied ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'} text-white rounded-lg transition-colors flex items-center gap-1 uppercase text-[10px] font-bold`}
                        >
-                           <Copy size={12} /> COPIAR
+                           <Copy size={12} /> {copied ? 'COPIADO ✓' : 'COPIAR'}
                        </button>
                    </div>
                </div>
@@ -426,6 +441,76 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
              </div>
              <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-2">PAGAMENTO APROVADO!</h3>
              <p className="text-zinc-400">Liberando seu acesso VIP...</p>
+          </div>
+        )}
+
+        {step === 'upsell' && (
+          <div className="p-6 sm:p-8 text-center animate-fade-in-up">
+            {/* Header verde de sucesso */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">VIP ATIVADO COM SUCESSO</span>
+            </div>
+
+            {/* Separador */}
+            <div className="h-px bg-zinc-800 mb-6"></div>
+
+            {/* Oferta relâmpago */}
+            <div className="bg-gradient-to-b from-red-950/40 to-zinc-900 border-2 border-red-500/40 rounded-2xl p-6 mb-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent"></div>
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 bg-red-600 text-white text-[9px] font-black uppercase px-4 py-1.5 rounded-full mb-4 animate-pulse tracking-widest">
+                  ⚡ OFERTA ÚNICA PRA VOCÊ
+                </div>
+
+                <h3 className="text-white font-black text-2xl uppercase italic tracking-tighter mb-2 leading-tight">
+                  SUBMUNDO <span className="text-red-500">VAZADO</span>
+                </h3>
+                <p className="text-zinc-400 text-sm mb-4 leading-relaxed">
+                  9 vídeos proibidos do submundo que <span className="text-white font-bold">você não encontra em nenhum outro lugar</span>. Conteúdo restrito, pesado e exclusivo.
+                </p>
+
+                {/* Preview dos vídeos */}
+                <div className="grid grid-cols-3 gap-1.5 mb-4">
+                  {['foto22.jpg', 'foto20.jpg', 'foto21.jpg'].map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden">
+                      <img src={`https://secreto.meuprivacy.digital/acesso/${img}`} className="w-full h-full object-cover blur-[3px] opacity-60" alt="" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="w-5 h-5 text-red-500" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Preço com desconto */}
+                <div className="bg-black/40 rounded-xl p-4 border border-red-500/20">
+                  <div className="flex items-center justify-center gap-3 mb-1">
+                    <span className="text-zinc-500 line-through text-lg">R$ 89,00</span>
+                    <span className="text-red-500 font-black text-3xl">R$ 29,90</span>
+                  </div>
+                  <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só para quem acabou de assinar VIP</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão CTA */}
+            <button
+              onClick={() => {
+                onClose();
+                if (onOpenVazados) onOpenVazados();
+              }}
+              className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_30px_rgba(220,38,38,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-3"
+            >
+              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 29,90
+            </button>
+
+            {/* Botão pular */}
+            <button
+              onClick={onClose}
+              className="w-full py-3 text-zinc-600 text-xs font-bold uppercase hover:text-zinc-400 transition-colors"
+            >
+              Não, obrigado. Continuar navegando.
+            </button>
           </div>
         )}
 

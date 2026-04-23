@@ -28,7 +28,9 @@ const generateAccessId = () => {
 
 const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
-const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, onDirectAccess: () => void }) => {
+const VAZADOS_PROMO_KEY = 'vazados_promo_start';
+
+const PixPaymentModal = ({ onClose, onConfirm, accessId, currentPrice }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, currentPrice: number }) => {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pixData, setPixData] = useState<{ qrcode: string, copiaCola: string, id: string } | null>(null);
@@ -63,7 +65,7 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
             'x-api-key': API_KEY
           },
           body: JSON.stringify({ 
-            amount: 29.90,
+            amount: currentPrice,
             webhook_url: 'https://weebhooks.synio.com.br/webhook/receber-nexuspag'
           }),
           signal: controller.signal
@@ -176,14 +178,14 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           }));
           onConfirm(accessId);
         } else if (!isSilent) {
-          alert("Pagamento ainda não identificado. Aguarde alguns instantes.");
+          setError("Pagamento ainda não identificado. Aguarde alguns instantes.");
         }
       } else if (!isSilent) {
-        alert("Erro ao consultar status. Tente novamente.");
+        setError("Erro ao consultar status. Tente novamente.");
       }
     } catch (err) {
       if (!isSilent) {
-        alert("Falha ao verificar. Tente novamente.");
+        setError("Falha ao verificar. Tente novamente.");
       }
     } finally {
       if (!isSilent) setIsVerifying(false);
@@ -224,7 +226,7 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           {loading ? (
             <div className="py-16 flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-[#10b981] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Gerando PIX R$ 29,90...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Gerando PIX R$ {currentPrice.toFixed(2).replace('.', ',')}...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -237,7 +239,7 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
             <>
               <div className="text-center mb-6">
                 <span className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">VALOR DO ACESSO</span>
-                <div className="text-5xl font-black text-zinc-900 italic tracking-tighter">R$ 29,90</div>
+                <div className="text-5xl font-black text-zinc-900 italic tracking-tighter">R$ {currentPrice.toFixed(2).replace('.', ',')}</div>
               </div>
               <div className="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm mb-6">
                 <img src={pixData.qrcode} alt="QR Code" className="w-48 h-48 object-contain" />
@@ -257,14 +259,14 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
                 {isVerifying ? "VERIFICANDO..." : "JÁ PAGUEI, LIBERAR SUBMUNDO"}
               </button>
 
+              {error && (
+                <p className="text-red-500 text-sm mb-2 font-bold text-center w-full bg-red-500/10 p-2 rounded-lg">{error}</p>
+              )}
+
               <div className="flex items-center justify-center gap-2 text-zinc-400 font-mono text-lg mt-4 mb-2">
                 <Timer className="w-5 h-5" /> {formatTime(timeLeft)}
               </div>
               <p className="text-zinc-400 text-[9px] mb-4 text-center">Verificação automática a cada 5s • Expira em 10 min</p>
-
-              <button onClick={onDirectAccess} className="w-full bg-zinc-900/5 text-zinc-400 border border-zinc-200 border-dashed py-2 rounded-xl text-[10px] font-black uppercase hover:bg-zinc-900/10 transition-colors">
-                [ DEBUG ] ATUALIZAR STATUS PARA PAGO
-              </button>
             </>
           ) : null}
         </div>
@@ -286,6 +288,48 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(12 * 60 + 45);
 
+  // Timer de promoção Vazados: 6 minutos a R$29,90, depois R$89,00
+  const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
+  const [currentPrice, setCurrentPrice] = useState(29.90);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(VAZADOS_PROMO_KEY);
+    let startTime: number;
+
+    if (stored) {
+      startTime = parseInt(stored, 10);
+    } else {
+      startTime = Date.now();
+      localStorage.setItem(VAZADOS_PROMO_KEY, startTime.toString());
+    }
+
+    const updatePromo = () => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const promoTotal = 6 * 60; // 6 minutos
+      const remaining = promoTotal - elapsed;
+
+      if (remaining > 0) {
+        setPromoSecondsLeft(remaining);
+        setCurrentPrice(29.90);
+      } else {
+        setPromoSecondsLeft(0);
+        setCurrentPrice(89.00);
+      }
+    };
+
+    updatePromo();
+    const interval = setInterval(updatePromo, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isPromoActive = promoSecondsLeft > 0;
+
+  const formatPromoTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setTimeLeft(p => p > 0 ? p - 1 : 0), 1000);
     return () => clearInterval(timer);
@@ -301,6 +345,10 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
     const newId = generateAccessId();
     setPendingId(newId);
     setShowPixModal(true);
+    // Facebook Pixel: Lead event
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Lead', { content_name: 'vazados_submundo', value: currentPrice, currency: 'BRL' });
+    }
   };
 
   const handleConfirmAccess = (id: string) => {
@@ -315,16 +363,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
     }, 3000);
   };
 
-  const handleDirectAccess = async () => {
-    // Ação de debug: Força o status 'paid' no localStorage
-    const debugId = pendingId || generateAccessId();
-    localStorage.setItem(`access_${debugId}`, JSON.stringify({
-      status: 'paid',
-      activatedAt: new Date().toISOString()
-    }));
-      
-    handleConfirmAccess(debugId);
-  };
+
 
   if (isUnlocked) {
     return <SubmundoVazado accessId={validatedId} onBack={() => setIsUnlocked(false)} />;
@@ -399,21 +438,45 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-bold">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-green-400">{Math.floor(Math.random() * 80 + 120)} garotas online agora {cityName ? `em ${cityName}` : 'na sua região'}</span>
+                <span className="text-green-400">{(() => { const seed = parseInt(sessionStorage.getItem('leak_seed') || String(Math.floor(Math.random() * 80 + 120))); if (!sessionStorage.getItem('leak_seed')) sessionStorage.setItem('leak_seed', String(seed)); return seed; })()} garotas online agora {cityName ? `em ${cityName}` : 'na sua região'}</span>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col items-center gap-6 pt-4">
-            <div className="bg-zinc-900/80 border border-red-900/40 px-8 py-4 rounded-3xl backdrop-blur-xl flex flex-col items-center">
-               <p className="text-[9px] text-zinc-500 uppercase font-black mb-1">O link de acesso expira em:</p>
-               <div className="flex items-center gap-2 text-2xl font-black text-red-500"><Timer size={20} /><span>{formatTime(timeLeft)}</span></div>
-            </div>
+
+            {/* Promo timer badge */}
+            {isPromoActive ? (
+              <div className="bg-gradient-to-r from-green-950/60 to-emerald-950/60 border-2 border-green-500/40 rounded-2xl px-8 py-5 backdrop-blur-xl flex flex-col items-center shadow-[0_0_30px_rgba(16,185,129,0.2)] w-full max-w-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO RELÂMPAGO ATIVA</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Timer size={22} className="text-green-400" />
+                  <span className="text-green-400 font-mono font-black text-3xl">{formatPromoTime(promoSecondsLeft)}</span>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-zinc-400 text-xs line-through">R$ 89,00</span>
+                  <span className="text-green-400 font-black text-lg">R$ 29,90</span>
+                </div>
+                <p className="text-green-300/60 text-[9px] mt-1 font-bold">Após o timer, o valor será R$ 89,00 permanentemente</p>
+              </div>
+            ) : (
+              <div className="bg-red-950/40 border-2 border-red-500/30 rounded-2xl px-8 py-5 backdrop-blur-xl flex flex-col items-center w-full max-w-md">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle size={14} className="text-red-400" />
+                  <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
+                </div>
+                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 29,90 expirou</p>
+              </div>
+            )}
+
             <button onClick={handleStartPurchase} className="group relative w-full max-w-md">
               <div className="absolute -inset-1 bg-red-600 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-500"></div>
               <div className="relative bg-red-600 hover:bg-red-500 text-white font-black uppercase text-lg py-6 rounded-2xl transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-4">
                 <span>LIBERAR ACESSO</span>
-                <span className="text-white/60 text-sm">R$ 29,90</span>
+                <span className="text-white/60 text-sm">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
               </div>
             </button>
             <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">✅ Vazados + Grupo VIP de Garotas inclusos</p>
@@ -442,7 +505,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
          </div>
       </div>
 
-      {showPixModal && <PixPaymentModal accessId={pendingId} onClose={() => setShowPixModal(false)} onConfirm={handleConfirmAccess} onDirectAccess={handleDirectAccess} />}
+      {showPixModal && <PixPaymentModal accessId={pendingId} onClose={() => setShowPixModal(false)} onConfirm={handleConfirmAccess} currentPrice={currentPrice} />}
 
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-black flex flex-col items-center justify-center">

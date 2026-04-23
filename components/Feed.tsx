@@ -10,6 +10,7 @@ interface FeedProps {
 
 const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVip: () => void; variant: number }> = ({ onOpen, onClose, onOpenVip, variant }) => {
   const [pulse, setPulse] = useState(true);
+  const [viewerCount] = useState(() => Math.floor(Math.random() * 300 + 500));
 
   useEffect(() => {
     const t = setInterval(() => setPulse(p => !p), 1500);
@@ -98,7 +99,13 @@ const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVi
         </div>
 
         <button 
-          onClick={onOpen}
+          onClick={() => {
+            // Facebook Pixel: Lead event
+            if (typeof window !== 'undefined' && (window as any).fbq) {
+              (window as any).fbq('track', 'Lead', { content_name: 'vazados_popup', content_category: 'vazados' });
+            }
+            onOpen();
+          }}
           className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase text-sm py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)] hover:shadow-[0_0_50px_rgba(220,38,38,0.5)] active:scale-[0.97] flex items-center justify-center gap-3"
         >
           <ShieldAlert size={18} />
@@ -114,7 +121,7 @@ const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVi
         </button>
 
         <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">
-          ⚡ {Math.floor(Math.random() * 300 + 500)} pessoas acessando agora
+          ⚡ {viewerCount} pessoas acessando agora
         </p>
       </div>
     </div>

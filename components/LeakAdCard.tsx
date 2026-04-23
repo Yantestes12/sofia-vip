@@ -10,6 +10,7 @@ interface LeakAdCardProps {
 const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
   const [dismissed, setDismissed] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [viewerCount] = useState(() => Math.floor(Math.random() * 300 + 500));
 
   // Aparece após 8 segundos na página
   useEffect(() => {
@@ -77,7 +78,7 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
              </button>
 
              <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest mt-3">
-               ⚡ {Math.floor(Math.random() * 300 + 500)} pessoas acessando agora
+               ⚡ {viewerCount} pessoas acessando agora
              </p>
           </div>
         </div>
