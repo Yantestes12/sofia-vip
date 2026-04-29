@@ -19,45 +19,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [copied, setCopied] = useState(false);
   const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
-  // Timer de promoção: 8 minutos para R$4,50, depois R$9,90
-  const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
-  const [currentPrice, setCurrentPrice] = useState(4.50);
+  // Preço fixo R$4,50
+  const currentPrice = 4.50;
 
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
   // Extrai cidade da localização
   const cityName = leadLocation ? leadLocation.split(',')[0].trim() : '';
 
-  // Inicializa o timer de promoção com persistência no localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(PROMO_STORAGE_KEY);
-    let startTime: number;
 
-    if (stored) {
-      startTime = parseInt(stored, 10);
-    } else {
-      startTime = Date.now();
-      localStorage.setItem(PROMO_STORAGE_KEY, startTime.toString());
-    }
-
-    const updatePromo = () => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const promoTotal = 8 * 60; // 8 minutos
-      const remaining = promoTotal - elapsed;
-
-      if (remaining > 0) {
-        setPromoSecondsLeft(remaining);
-        setCurrentPrice(4.50);
-      } else {
-        setPromoSecondsLeft(0);
-        setCurrentPrice(9.90);
-      }
-    };
-
-    updatePromo();
-    const interval = setInterval(updatePromo, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -221,6 +191,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
           setStep('success');
           // Ativa VIP imediatamente
           onSuccess();
+          // Facebook Pixel: Purchase event (R$4,50 real)
+          if (typeof window !== 'undefined' && (window as any).fbq) {
+            const eventID = 'purchase_' + Date.now();
+            (window as any).fbq('track', 'Purchase', {
+              value: currentPrice,
+              currency: 'BRL',
+              content_ids: ['segredinho_sofia'],
+              content_type: 'product',
+              content_name: 'Segredinho Sofia'
+            }, { eventID });
+            console.log('[Pixel] Purchase disparado - valor:', currentPrice, 'eventID:', eventID);
+          }
           // Depois de 2.5s mostra upsell
           setTimeout(() => {
             setStep('upsell');
@@ -251,7 +233,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
   if (!isOpen) return null;
 
-  const isPromoActive = promoSecondsLeft > 0;
+
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in sm:p-6">
@@ -278,40 +260,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               Me ajuda desbloqueando? O valor é só pro meu café na padaria e pão com presunto depois da faculdade 🥺📚
             </p>
 
-            {/* Timer de promoção */}
-            {isPromoActive ? (
-              <div className="bg-gradient-to-r from-green-950/50 to-emerald-950/50 border border-green-500/30 rounded-xl p-4 mb-5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/5"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ATIVA</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <Timer className="w-5 h-5 text-green-400" />
-                    <span className="text-green-400 font-mono font-black text-2xl">{formatTime(promoSecondsLeft)}</span>
-                  </div>
-                  <p className="text-green-300/70 text-[10px] mt-2 font-bold">Após o tempo o valor será <span className="text-red-400 line-through">R$ 9,90</span></p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-red-950/30 border border-red-500/20 rounded-xl p-4 mb-5">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
-                </div>
-                <p className="text-zinc-400 text-[10px]">O preço promocional expirou</p>
-              </div>
-            )}
+
 
             {/* Preço */}
             <div className="bg-zinc-950 rounded-xl p-4 mb-5 border border-zinc-800">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-zinc-400 text-sm font-medium">Segredinho Completo 😈</span>
                 <div className="flex items-center gap-2">
-                  {isPromoActive && (
-                    <span className="text-zinc-500 line-through text-xs">R$ 9,90</span>
-                  )}
                   <span className="text-white font-black">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>

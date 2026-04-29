@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Heart, MessageCircle, Gem, Lock, ShieldAlert, AlertTriangle, X } from './Icons';
 
 interface FeedProps {
@@ -7,6 +7,77 @@ interface FeedProps {
   onOpenVazados: () => void;
   isVip: boolean;
 }
+
+// ====== VIDEO PREVIEW (usa frame real do vídeo como thumb) ======
+const VideoPreview: React.FC<{
+  src: string;
+  blurLevel: number;
+  onUnlock: () => void;
+  likes: string;
+}> = ({ src, blurLevel, onUnlock, likes }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [froze, setFroze] = useState(false);
+
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+
+    // Tenta dar play muted por 3 segundos, depois congela
+    const handleCanPlay = () => {
+      vid.play().catch(() => {});
+    };
+
+    const handleTimeUpdate = () => {
+      if (vid.currentTime >= 3 && !froze) {
+        vid.pause();
+        setFroze(true);
+      }
+    };
+
+    vid.addEventListener('canplay', handleCanPlay);
+    vid.addEventListener('timeupdate', handleTimeUpdate);
+
+    return () => {
+      vid.removeEventListener('canplay', handleCanPlay);
+      vid.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [froze]);
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        src={`${src}#t=0.5`}
+        muted
+        playsInline
+        preload="metadata"
+        className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+        style={{ filter: froze ? `blur(${blurLevel}px)` : `blur(${Math.max(blurLevel - 6, 0)}px)` }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/70 via-transparent to-transparent"></div>
+
+      {/* Ícone de play + duração */}
+      <div className="absolute top-3 right-3 bg-black/60 text-white text-[10px] font-bold px-2 py-1 rounded-md backdrop-blur-sm z-20 flex items-center gap-1">
+        ▶ VÍDEO
+      </div>
+
+      {/* Overlay de unlock */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+        <div className="bg-black/40 backdrop-blur-sm p-4 rounded-2xl flex flex-col items-center">
+          <Lock className="w-7 h-7 text-pink-400 mb-2 drop-shadow-lg" />
+          <p className="text-white text-[10px] font-bold mb-2">Prévia de 3s • Vídeo completo bloqueado</p>
+          <button 
+            onClick={onUnlock}
+            className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-[0_0_20px_rgba(236,72,153,0.4)] active:scale-[0.97] transition-transform"
+          >
+            DESBLOQUEAR — R$ 4,50
+          </button>
+          <p className="text-zinc-400 text-[10px] mt-2 font-bold">❤️ {likes} curtidas</p>
+        </div>
+      </div>
+    </>
+  );
+};
 
 const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVip: () => void; variant: number }> = ({ onOpen, onClose, onOpenVip, variant }) => {
   const [pulse, setPulse] = useState(true);
@@ -130,6 +201,22 @@ const VazadosPopup: React.FC<{ onOpen: () => void; onClose: () => void; onOpenVi
 
 const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip }) => {
   const [dismissedPopups, setDismissedPopups] = useState<Set<number>>(new Set());
+
+  // Blur progressivo: posts mais abaixo no feed ficam mais borrados
+  const getBlurLevel = (postIndex: number): number => {
+    // Posts desbloqueados retornam 0 (tratado antes de chamar)
+    // Para bloqueados, blur escala com a posição
+    const blurMap: Record<number, number> = {
+      0: 4,    // primeiro bloqueado: leve
+      1: 6,    // segundo: médio-leve
+      2: 10,   // terceiro: médio
+      3: 14,   // quarto: forte
+      4: 18,   // quinto: muito forte
+      5: 22,   // sexto+: quase invisível
+    };
+    return blurMap[Math.min(postIndex, 5)] || 22;
+  };
+
 
   const posts = [
     {
@@ -275,6 +362,9 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip })
   };
 
   const feedItems = buildFeedItems();
+  
+  // Conta index de posts bloqueados para blur progressivo
+  let lockedCounter = 0;
 
   const handleDismiss = (popupIndex: number) => {
     setDismissedPopups(prev => new Set(prev).add(popupIndex));
@@ -298,6 +388,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip })
 
         const post = item.data;
         const locked = post.isLocked && !isVip;
+        const currentLockedIdx = locked ? lockedCounter++ : 0;
         return (
           <div key={post.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
             {/* Header */}
@@ -323,23 +414,38 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, isVip })
               <div className="absolute inset-0 z-10 bg-transparent pointer-events-none"></div>
               
               {locked ? (
-                <div className="aspect-[3/4] md:aspect-video w-full bg-zinc-950 flex flex-col items-center justify-center relative overflow-hidden">
-                  <img src={post.thumbnail || post.mediaUrl} className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-30 scale-110" alt="Locked" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent"></div>
-                  
-                  <div className="z-10 bg-zinc-900/80 border border-zinc-800/80 p-8 rounded-3xl text-center shadow-2xl backdrop-blur-md max-w-[85%]">
-                    <div className="w-16 h-16 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
-                       <Lock className="w-8 h-8 text-amber-400" />
-                    </div>
-                    <h3 className="text-white font-black text-xl uppercase italic mb-2 tracking-tighter">CONTEÚDO DO SEGREDINHO 😈</h3>
-                    <p className="text-zinc-400 text-xs mb-6 font-medium">Desbloqueia meu segredinho pra ver isso...</p>
-                    <button 
-                       onClick={onOpenSubscription} 
-                       className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white py-3 rounded-xl font-black uppercase text-sm transition-transform hover:scale-[1.02] active:scale-[0.98] shadow-lg flex justify-center items-center gap-2"
-                    >
-                       DESBLOQUEAR POR R$ 4,50 <Gem size={16} className="fill-white" />
-                    </button>
-                  </div>
+                <div className="aspect-[3/4] md:aspect-video w-full bg-zinc-950 relative overflow-hidden">
+                  {/* Preview real da mídia com blur progressivo */}
+                  {post.isVideo ? (
+                    <VideoPreview 
+                      src={post.mediaUrl} 
+                      blurLevel={getBlurLevel(currentLockedIdx)} 
+                      onUnlock={onOpenSubscription}
+                      likes={post.likes}
+                    />
+                  ) : (
+                    <>
+                      <img 
+                        src={post.mediaUrl} 
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-500" 
+                        style={{ filter: `blur(${getBlurLevel(currentLockedIdx)}px)` }}
+                        alt="Preview" 
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 via-transparent to-transparent"></div>
+                      {getBlurLevel(currentLockedIdx) >= 8 && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                          <Lock className="w-8 h-8 text-pink-400 mb-3 drop-shadow-lg" />
+                          <button 
+                            onClick={onOpenSubscription}
+                            className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-[0_0_20px_rgba(236,72,153,0.4)] active:scale-[0.97] transition-transform"
+                          >
+                            DESBLOQUEAR — R$ 4,50
+                          </button>
+                          <p className="text-zinc-400 text-[10px] mt-2 font-bold">❤️ {post.likes} curtidas</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="relative w-full bg-black flex items-center justify-center min-h-[300px]">

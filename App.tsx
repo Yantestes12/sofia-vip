@@ -17,52 +17,91 @@ const WELCOME_SEEN_KEY = 'sofia_welcome_seen';
 
 const VIP_STORAGE_KEY = 'sofia_segredinho_access';
 
-// ====== SOCIAL PROOF TOAST ======
-const FIRST_NAMES = ['Lucas','Pedro','João','Carlos','Bruno','Felipe','Gustavo','Rafael','Mateus','André','Daniel','Gabriel','Diego','Marcos','Thiago','Leonardo','Ricardo','Eduardo','Rodrigo','Victor'];
-const ACTIONS_VIP = ['desbloqueou o Segredinho','liberou os conteúdos','virou membro especial'];
-const ACTIONS_SUB = ['acessou o Submundo','liberou os Vazados','desbloqueou tudo'];
+// ====== SOCIAL PROOF TOAST (12 variações calibradas) ======
+const SP_NAMES = ['Lucas','Pedro','João','Carlos','Bruno','Felipe','Gustavo','Rafael','Mateus','André','Daniel','Gabriel','Diego','Marcos','Thiago','Leonardo','Ricardo','Eduardo','Rodrigo','Victor','Henrique','Caio','Vinícius','Igor','Renato'];
+const SP_CITIES_FALLBACK = ['São Paulo','Rio de Janeiro','Belo Horizonte','Curitiba','Salvador','Fortaleza','Brasília','Goiânia','Recife','Porto Alegre'];
+
+type SPNotification = { emoji: string; text: string; sub: string };
+
+const generateNotification = (cityName: string, index: number): SPNotification => {
+  const name = SP_NAMES[Math.floor(Math.random() * SP_NAMES.length)];
+  const city = cityName || SP_CITIES_FALLBACK[Math.floor(Math.random() * SP_CITIES_FALLBACK.length)];
+  const mins = Math.floor(Math.random() * 7) + 1;
+  const weekCount = Math.floor(Math.random() * 400) + 600;
+  const viewingNow = Math.floor(Math.random() * 30) + 15;
+
+  // Sequência calibrada por gatilho psicológico
+  const templates: (() => SPNotification)[] = [
+    // 0: Validação local (FOMO geográfico)
+    () => ({ emoji: '🔥', text: `${name} de ${city} desbloqueou o Segredinho`, sub: `há ${mins} min` }),
+    // 1: Intimidade (relação parassocial)
+    () => ({ emoji: '💜', text: `Sofia está online respondendo mensagens`, sub: `agora mesmo` }),
+    // 2: FOMO de atividade
+    () => ({ emoji: '👀', text: `${viewingNow} pessoas assistindo conteúdos agora`, sub: `atividade em tempo real` }),
+    // 3: Prova numérica
+    () => ({ emoji: '⚡', text: `${weekCount} pessoas desbloquearam esta semana`, sub: `e contando...` }),
+    // 4: Testemunho implícito
+    () => ({ emoji: '😈', text: `"Melhor R$ 4,50 que já gastei na vida"`, sub: `via DM anônima` }),
+    // 5: Validação de valor
+    () => ({ emoji: '💰', text: `Última compra: R$ 4,50`, sub: `há ${Math.floor(Math.random() * 50) + 10} segundos` }),
+    // 6: Urgência temporal
+    () => ({ emoji: '🔥', text: `${Math.floor(Math.random() * 3) + 2} novos conteúdos adicionados hoje`, sub: `conteúdo fresquinho` }),
+    // 7: Competição social
+    () => ({ emoji: '🏆', text: `Vídeo mais assistido hoje: 2.4k views`, sub: `conteúdo trending` }),
+    // 8: Escassez
+    () => ({ emoji: '⏰', text: `Estes conteúdos podem ser removidos a qualquer momento`, sub: `salve enquanto pode` }),
+    // 9: Proximidade + local
+    () => ({ emoji: '📍', text: `Alguém perto de você acabou de desbloquear`, sub: `${city} • agora` }),
+    // 10: FOMO de conteúdo
+    () => ({ emoji: '🔥', text: `Novo vídeo postado — ${Math.floor(Math.random() * 40) + 20} já assistiram`, sub: `há ${Math.floor(Math.random() * 20) + 5} min` }),
+    // 11: Emocional / conexão
+    () => ({ emoji: '💕', text: `Sofia agradeceu ${Math.floor(Math.random() * 15) + 8} novos apoiadores`, sub: `hoje` }),
+  ];
+
+  const fn = templates[index % templates.length];
+  return fn();
+};
+
+// Sequência otimizada: cada índice atinge um gatilho diferente na ordem certa
+const SP_SEQUENCE = [0, 1, 2, 3, 4, 5, 0, 6, 2, 7, 9, 11, 8, 10, 0, 5, 3, 1, 4, 6];
 
 const SocialProofToast: React.FC<{ cityName: string }> = ({ cityName }) => {
   const [visible, setVisible] = useState(false);
-  const [message, setMessage] = useState('');
-  const [timeAgo, setTimeAgo] = useState('');
+  const [notif, setNotif] = useState<SPNotification>({ emoji: '', text: '', sub: '' });
+  const [seqIndex, setSeqIndex] = useState(0);
 
   useEffect(() => {
     const showToast = () => {
-      const name = FIRST_NAMES[Math.floor(Math.random() * FIRST_NAMES.length)];
-      const isVip = Math.random() > 0.4;
-      const action = isVip 
-        ? ACTIONS_VIP[Math.floor(Math.random() * ACTIONS_VIP.length)]
-        : ACTIONS_SUB[Math.floor(Math.random() * ACTIONS_SUB.length)];
-      const location = cityName || 'sua região';
-      const mins = Math.floor(Math.random() * 8) + 1;
-      
-      setMessage(`${name} de ${location} ${action}`);
-      setTimeAgo(`há ${mins} min`);
+      const idx = SP_SEQUENCE[seqIndex % SP_SEQUENCE.length];
+      setNotif(generateNotification(cityName, idx));
+      setSeqIndex(prev => prev + 1);
       setVisible(true);
-      
-      setTimeout(() => setVisible(false), 4000);
+      setTimeout(() => setVisible(false), 4500);
     };
 
-    // Primeiro toast após 12s
-    const firstTimer = setTimeout(showToast, 12000);
-    // Depois a cada 18-30s
-    const interval = setInterval(showToast, Math.floor(Math.random() * 12000) + 18000);
+    // Primeiro toast após 10s
+    const firstTimer = setTimeout(showToast, 10000);
+    // Depois com intervalo variável (12-22s) pra parecer orgânico
+    const interval = setInterval(showToast, Math.floor(Math.random() * 10000) + 12000);
     
     return () => { clearTimeout(firstTimer); clearInterval(interval); };
-  }, [cityName]);
+  }, [cityName, seqIndex]);
 
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 z-[80] animate-fade-in-up max-w-[280px]">
-      <div className="bg-zinc-900/95 border border-zinc-700/50 rounded-xl px-4 py-3 shadow-2xl backdrop-blur-md flex items-center gap-3">
-        <div className="w-9 h-9 bg-amber-500/20 rounded-full flex items-center justify-center shrink-0 border border-amber-500/30">
-          <span className="text-base">🔥</span>
+    <div className="fixed bottom-20 left-4 z-[80] max-w-[300px]" style={{ animation: 'fadeSlideIn 0.4s ease-out, fadeSlideOut 0.4s ease-in 4s forwards' }}>
+      <style>{`
+        @keyframes fadeSlideIn { from { opacity: 0; transform: translateX(-20px) translateY(10px); } to { opacity: 1; transform: translateX(0) translateY(0); } }
+        @keyframes fadeSlideOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-30px); } }
+      `}</style>
+      <div className="bg-zinc-900/95 border border-zinc-700/50 rounded-xl px-4 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.5)] backdrop-blur-md flex items-center gap-3">
+        <div className="w-9 h-9 bg-pink-500/15 rounded-full flex items-center justify-center shrink-0 border border-pink-500/20">
+          <span className="text-base">{notif.emoji}</span>
         </div>
         <div className="min-w-0">
-          <p className="text-white text-xs font-bold truncate">{message}</p>
-          <p className="text-zinc-500 text-[10px] font-medium">{timeAgo}</p>
+          <p className="text-white text-[11px] font-bold leading-tight">{notif.text}</p>
+          <p className="text-zinc-500 text-[10px] font-medium mt-0.5">{notif.sub}</p>
         </div>
       </div>
     </div>
@@ -747,7 +786,7 @@ const App: React.FC = () => {
             onClick={() => setShowPaymentModal(true)}
             className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            😈 DESBLOQUEAR SEGREDINHO — R$ 4,50
+            🔥 8 conteúdos bloqueados — DESBLOQUEAR R$ 4,50
           </button>
         </div>
       )}

@@ -48,12 +48,15 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
       </div>
 
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-        {photos.map((photo) => {
+        {photos.map((photo, i) => {
           const locked = photo.isLocked && !isVip;
+          // Blur progressivo: primeiras bloqueadas = leve, últimas = pesado
+          const lockedBefore = photos.slice(0, i).filter(p => p.isLocked && !isVip).length;
+          const blurPx = locked ? Math.min(4 + lockedBefore * 1.5, 20) : 0;
           return (
             <div 
               key={photo.id} 
-              className="relative aspect-[3/4] group overflow-hidden bg-zinc-900 rounded-xl cursor-pointer border border-zinc-800/50 hover:border-amber-400/50 transition-all shadow-md"
+              className="relative aspect-[3/4] group overflow-hidden bg-zinc-900 rounded-xl cursor-pointer border border-zinc-800/50 hover:border-pink-400/50 transition-all shadow-md"
               onClick={() => handlePhotoClick(photo)}
             >
               {/* Overlay de Proteção Transparente */}
@@ -62,13 +65,16 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
               <img 
                 src={photo.url} 
                 alt="Foto" 
-                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${locked ? 'blur-lg opacity-40 scale-105' : 'opacity-90 group-hover:opacity-100'}`}
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${locked ? 'scale-105' : 'opacity-90 group-hover:opacity-100'}`}
+                style={locked ? { filter: `blur(${blurPx}px)`, opacity: 0.7 } : {}}
                 loading="lazy"
               />
               {locked ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
-                  <Lock className="w-6 h-6 text-white mb-1 drop-shadow-lg" />
-                  <span className="bg-pink-500 text-white px-2 py-0.5 rounded-md font-black text-[8px] uppercase">😈</span>
+                  <Lock className="w-5 h-5 text-pink-400 mb-1 drop-shadow-lg" />
+                  {blurPx >= 10 && (
+                    <span className="bg-pink-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">R$ 4,50</span>
+                  )}
                 </div>
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2 z-10">
