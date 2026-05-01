@@ -1,17 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import ProfileHeader from './components/ProfileHeader';
-import Navigation from './components/Navigation';
-import PhotoGrid from './components/PhotoGrid';
-import VideoGallery from './components/VideoGallery';
 import Feed from './components/Feed';
-import LiveSection from './components/LiveSection';
 import ExclusiveLeakPage from './components/ExclusiveLeakPage';
 import SubmundoVazado from './components/SubmundoVazado';
 import LeakAdCard from './components/LeakAdCard';
 import PaymentModal from './components/PaymentModal';
 import Stories from './components/Stories';
-import { TabType, CreatorProfile } from './types';
+import AgeVerificationModal, { checkAgeVerified, getDiscount } from './components/AgeVerificationModal';
+import { CreatorProfile } from './types';
 
 const WELCOME_SEEN_KEY = 'sofia_welcome_seen';
 
@@ -41,9 +38,9 @@ const generateNotification = (cityName: string, index: number): SPNotification =
     // 3: Prova numérica
     () => ({ emoji: '⚡', text: `${weekCount} pessoas desbloquearam esta semana`, sub: `e contando...` }),
     // 4: Testemunho implícito
-    () => ({ emoji: '😈', text: `"Melhor R$ 4,50 que já gastei na vida"`, sub: `via DM anônima` }),
+    () => ({ emoji: '😈', text: `"Melhor R$ 9,90 que já gastei na vida"`, sub: `via DM anônima` }),
     // 5: Validação de valor
-    () => ({ emoji: '💰', text: `Última compra: R$ 4,50`, sub: `há ${Math.floor(Math.random() * 50) + 10} segundos` }),
+    () => ({ emoji: '💰', text: `Última compra: R$ 9,90`, sub: `há ${Math.floor(Math.random() * 50) + 10} segundos` }),
     // 6: Urgência temporal
     () => ({ emoji: '🔥', text: `${Math.floor(Math.random() * 3) + 2} novos conteúdos adicionados hoje`, sub: `conteúdo fresquinho` }),
     // 7: Competição social
@@ -252,7 +249,7 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
 
         {/* Imagem de fundo */}
         <div className="relative h-40 overflow-hidden">
-          <img src="https://secreto.meuprivacy.digital/acesso/foto5.jpg" className="w-full h-full object-cover blur-[2px] opacity-40 scale-110" alt="" />
+          <img src="https://secreto.meuprivacy.digital/nataliexking/foto5.webp" className="w-full h-full object-cover blur-[2px] opacity-40 scale-110" alt="" />
           <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent"></div>
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
@@ -278,7 +275,7 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
           <div className="bg-zinc-950 rounded-xl p-4 border border-pink-500/20">
             <div className="flex items-center justify-center gap-3">
               <span className="text-zinc-500 line-through text-lg">R$ 9,90</span>
-              <span className="text-pink-400 font-black text-4xl">R$ 4,50</span>
+              <span className="text-pink-400 font-black text-4xl">R$ 9,90</span>
             </div>
             <p className="text-pink-400/60 text-[9px] mt-1 font-bold uppercase">Oferta exclusiva de saída • Não vai aparecer de novo</p>
           </div>
@@ -287,7 +284,7 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
             onClick={() => { setShow(false); onSubscribe(); }}
             className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            😈 QUERO O SEGREDINHO POR R$ 4,50
+            😈 QUERO O SEGREDINHO POR R$ 9,90
           </button>
 
           <button onClick={() => setShow(false)} className="text-zinc-600 text-xs font-bold uppercase hover:text-zinc-400 transition-colors">
@@ -306,35 +303,35 @@ const CHAT_VARIATIONS = [
     { delay: 2500, text: "Gostou dos meus conteúdos? 💕", typing: 2000 },
     { delay: 5500, text: "Tenho uns vídeos BEM mais ousados guardados... 🔥", typing: 2500 },
     { delay: 9000, text: "Desbloqueia meu Segredinho que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
-    { delay: 13500, text: "É só R$ 4,50... me ajuda a pagar a faculdade 🥺", typing: 1500 },
+    { delay: 13500, text: "É só R$ 9,90... me ajuda a pagar a faculdade 🥺", typing: 1500 },
   ],
   [
     { delay: 0, text: "Oiii 🥰", typing: 1200 },
     { delay: 2000, text: "Que bom que você veio ver meus conteúdos...", typing: 2000 },
     { delay: 5000, text: "Mas o melhor mesmo eu escondi no meu Segredinho 😈", typing: 2500 },
     { delay: 8500, text: "São coisas que eu tenho muita vergonha de mostrar pra qualquer um 🙈💦", typing: 3000 },
-    { delay: 12500, text: "Desbloqueia vai... é R$ 4,50, menos que um pão com presunto 🥺", typing: 1800 },
+    { delay: 12500, text: "Desbloqueia vai... é R$ 9,90, menos que um pão com presunto 🥺", typing: 1800 },
   ],
   [
     { delay: 0, text: "Ei você 👀", typing: 1000 },
     { delay: 2000, text: "Tô vendo que tá curtindo né? 😏", typing: 1800 },
     { delay: 4800, text: "Imagina o que eu guardo no meu Segredinho então... 🤫🔥", typing: 2500 },
     { delay: 8300, text: "Vídeos que eu NUNCA postaria em lugar nenhum 😈", typing: 2200 },
-    { delay: 11500, text: "Me ajuda com R$ 4,50? Preciso pagar minha faculdade amor 📚🥺", typing: 2000 },
+    { delay: 11500, text: "Me ajuda com R$ 9,90? Preciso pagar minha faculdade amor 📚🥺", typing: 2000 },
   ],
   [
     { delay: 0, text: "Oi gatinho 😘", typing: 1300 },
     { delay: 2300, text: "Sabia que você ia aparecer por aqui...", typing: 2000 },
     { delay: 5300, text: "Quero te mostrar umas coisas que ninguém viu ainda 🤫", typing: 2500 },
     { delay: 8800, text: "Tá tudo no meu Segredinho 😈 é meu conteúdo mais safado", typing: 2800 },
-    { delay: 12600, text: "São só R$ 4,50 pra desbloquear tudo... pra sempre 💕", typing: 1500 },
+    { delay: 12600, text: "São só R$ 9,90 pra desbloquear tudo... pra sempre 💕", typing: 1500 },
   ],
   [
     { delay: 0, text: "Amor!! 💕", typing: 1000 },
     { delay: 2000, text: "Obrigada por estar aqui comigo 🥰", typing: 1800 },
     { delay: 4800, text: "Eu gravei uns vídeos muito ousados ontem... tô morrendo de vergonha 🙈", typing: 3000 },
     { delay: 8800, text: "Coloquei tudo no Segredinho... só pra quem realmente me apoia 😈💦", typing: 2800 },
-    { delay: 12600, text: "R$ 4,50 e você vê TUDO... me ajuda na faculdade? 🥺📚", typing: 1800 },
+    { delay: 12600, text: "R$ 9,90 e você vê TUDO... me ajuda na faculdade? 🥺📚", typing: 1800 },
   ],
 ];
 
@@ -391,7 +388,7 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
           onClick={() => setIsOpen(true)}
           className="fixed bottom-20 right-4 z-[70] w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-full shadow-[0_0_25px_rgba(236,72,153,0.4)] flex items-center justify-center animate-bounce hover:scale-110 transition-transform"
         >
-          <img src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" className="w-11 h-11 rounded-full object-cover border-2 border-white/30" alt="Sofia" />
+          <img src="https://secreto.meuprivacy.digital/nataliexking/foto1.webp" className="w-11 h-11 rounded-full object-cover border-2 border-white/30" alt="Sofia" />
           {unread > 0 && (
             <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-[10px] font-black border-2 border-zinc-950">
               {unread}
@@ -407,7 +404,7 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
           <div className="bg-gradient-to-r from-pink-600 to-rose-500 px-4 py-3 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
               <div className="relative">
-                <img src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" alt="Sofia" />
+                <img src="https://secreto.meuprivacy.digital/nataliexking/foto1.webp" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" alt="Sofia" />
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-pink-600"></div>
               </div>
               <div>
@@ -448,7 +445,7 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
               onClick={() => { setIsOpen(false); onSubscribe(); }}
               className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black uppercase text-xs rounded-xl active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
             >
-              🤫 DESBLOQUEAR SEGREDINHO — R$ 4,50
+              🤫 DESBLOQUEAR SEGREDINHO — R$ 9,90
             </button>
           </div>
         </div>
@@ -488,7 +485,7 @@ const ReturnVisitorBanner: React.FC<{ onSubscribe: () => void }> = ({ onSubscrib
     <div className="fixed top-0 left-0 right-0 z-[100] animate-fade-in">
       <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-3 flex items-center justify-center gap-3 shadow-lg">
         <span className="text-black text-xs sm:text-sm font-black uppercase text-center leading-tight">
-          🎉 BEM-VINDO DE VOLTA! Segredinho por <span className="line-through opacity-60">R$ 9,90</span> <span className="text-lg">R$ 4,50</span>
+          🎉 BEM-VINDO DE VOLTA! Segredinho por <span className="line-through opacity-60">R$ 9,90</span> <span className="text-lg">R$ 9,90</span>
         </span>
         <button
           onClick={() => { handleDismiss(); onSubscribe(); }}
@@ -553,7 +550,7 @@ const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
           {/* Foto da Sofia */}
           <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-pink-500/50 shadow-[0_0_40px_rgba(236,72,153,0.3)]">
             <img 
-              src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" 
+              src="https://secreto.meuprivacy.digital/nataliexking/foto1.webp" 
               alt="Sofia" 
               className="w-full h-full object-cover"
             />
@@ -589,7 +586,7 @@ const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
         {/* Vídeo preview */}
         <div className="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl aspect-[9/16] max-h-[50vh] mx-auto">
           <video 
-            src="https://secreto.meuprivacy.digital/acesso/video3.mp4"
+            src="https://secreto.meuprivacy.digital/nataliexking/video3.mp4"
             autoPlay 
             loop 
             muted 
@@ -625,9 +622,10 @@ const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
 };
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabType>('feed');
   const [isVip, setIsVip] = useState(false);
+  const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showAgeModal, setShowAgeModal] = useState(false);
   const [showLeakPortal, setShowLeakPortal] = useState(false);
   const [directAccessId, setDirectAccessId] = useState<string | null>(null);
   const [leadLocation, setLeadLocation] = useState<string>('');
@@ -636,8 +634,8 @@ const App: React.FC = () => {
 
   // Verifica VIP no localStorage ao carregar
   useEffect(() => {
-    const vipStatus = checkVipStatus();
-    setIsVip(vipStatus);
+    setIsVip(checkVipStatus());
+    setIsAgeVerified(checkAgeVerified());
   }, []);
 
   // Detecta localização do lead via IP
@@ -698,14 +696,14 @@ const App: React.FC = () => {
 
   const profileData: CreatorProfile = {
     name: "Sofia Oliveira",
-    handle: "sofia_vip",
+    handle: "sofiaoliveira",
     bio: "Obrigado por ter comprado meus conteúdos amor 💕 Aqui você vai ver meu lado mais íntimo... e se desbloquear meu Segredinho 😈, te mostro TUDO sem censura.",
-    age: 19,
-    subscribers: "158.9k",
+    age: 24,
+    subscribers: "203.4k",
     location: leadLocation,
-    tags: ["Amador", "Pés", "POV", "Sereia", "Caseiro"],
-    avatarUrl: "https://secreto.meuprivacy.digital/acesso/foto22.jpg",
-    bannerUrl: "https://secreto.meuprivacy.digital/acesso/foto5.jpg",
+    tags: ["Amador", "Provocante", "Caseiro", "Lingerie", "Safadinha"],
+    avatarUrl: "https://secreto.meuprivacy.digital/nataliexking/foto1.webp",
+    bannerUrl: "https://secreto.meuprivacy.digital/nataliexking/foto5.webp",
     socials: { instagram: "#", telegram: "#", twitter: "#" }
   };
 
@@ -725,17 +723,8 @@ const App: React.FC = () => {
     return <ExclusiveLeakPage onBack={() => setShowLeakPortal(false)} leadLocation={leadLocation} />;
   }
 
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'photos': return <PhotoGrid onOpenSubscription={() => setShowPaymentModal(true)} isVip={isVip} />;
-      case 'videos': return <VideoGallery onOpenSubscription={() => setShowPaymentModal(true)} isVip={isVip} />;
-      case 'live': return <LiveSection isVip={isVip} onOpenSubscription={() => setShowPaymentModal(true)} />;
-      case 'feed':
-      default: return <Feed onOpenSubscription={() => setShowPaymentModal(true)} onOpenVazados={() => setShowLeakPortal(true)} isVip={isVip} />;
-    }
-  };
-
-  // Extrai cidade da localização
+  const discount = getDiscount();
+  const vipDisplayPrice = discount > 0 ? `R$ ${(9.90 - discount).toFixed(2).replace('.',',')}` : 'R$ 9,90';
   const cityName = leadLocation ? leadLocation.split(',')[0].trim() : '';
 
   return (
@@ -746,7 +735,19 @@ const App: React.FC = () => {
         onPurchase={() => setShowPaymentModal(true)}
       />
 
-      <Stories isVip={isVip} onOpenSubscription={() => setShowPaymentModal(true)} />
+      <Stories 
+        isVip={isVip} 
+        isAgeVerified={isAgeVerified}
+        onOpenSubscription={() => setShowPaymentModal(true)} 
+        onOpenVazados={() => setShowLeakPortal(true)}
+        onRequestAgeVerification={() => setShowAgeModal(true)}
+      />
+
+      <AgeVerificationModal
+        isOpen={showAgeModal}
+        onClose={() => setShowAgeModal(false)}
+        onSuccess={() => { setIsAgeVerified(true); setShowAgeModal(false); }}
+      />
 
       <PaymentModal 
         isOpen={showPaymentModal} 
@@ -754,50 +755,39 @@ const App: React.FC = () => {
         onSuccess={handleVipSuccess}
         onOpenVazados={() => setShowLeakPortal(true)}
         leadLocation={leadLocation}
-      />
-
-      <Navigation 
-        activeTab={activeTab} 
-        setActiveTab={(tab: TabType | 'vazados') => {
-          if (tab === 'vazados') {
-            setShowLeakPortal(true);
-          } else {
-            setActiveTab(tab as TabType);
-          }
-        }} 
+        isAgeVerified={isAgeVerified}
       />
 
       <main className="container mx-auto px-4 py-8 animate-fade-in-up">
-        {renderContent()}
+        <Feed 
+          onOpenSubscription={() => setShowPaymentModal(true)} 
+          onOpenVazados={() => setShowLeakPortal(true)} 
+          onRequestAgeVerification={() => setShowAgeModal(true)}
+          isVip={isVip} 
+          isAgeVerified={isAgeVerified}
+        />
       </main>
 
       <LeakAdCard onClick={() => setShowLeakPortal(true)} onVipClick={() => setShowPaymentModal(true)} />
 
-      {/* Social Proof Toast */}
       {!isVip && <SocialProofToast cityName={cityName} />}
 
-      {/* Group Offer Modal */}
       <GroupOfferModal isOpen={showGroupOffer} onClose={() => setShowGroupOffer(false)} cityName={cityName} />
 
-      {/* Sticky CTA Bar (só pra quem não desbloqueou o Segredinho) */}
-      {!isVip && !showPaymentModal && (
+      {/* Sticky CTA Bar */}
+      {!isVip && !showPaymentModal && !showAgeModal && (
         <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-md px-4 py-3 animate-fade-in">
           <button 
             onClick={() => setShowPaymentModal(true)}
             className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            🔥 8 conteúdos bloqueados — DESBLOQUEAR R$ 4,50
+            🔥 Conteúdos bloqueados — DESBLOQUEAR {vipDisplayPrice}
           </button>
         </div>
       )}
 
-      {/* Exit Intent Popup */}
       {!isVip && <ExitIntentPopup onSubscribe={() => setShowPaymentModal(true)} />}
-
-      {/* Fake Sofia Chat */}
       {!isVip && <FakeSofiaChat onSubscribe={() => setShowPaymentModal(true)} />}
-
-      {/* Return Visitor Banner */}
       {!isVip && <ReturnVisitorBanner onSubscribe={() => setShowPaymentModal(true)} />}
 
       <footer className="py-12 text-center bg-zinc-950 text-zinc-700 text-xs border-t border-zinc-900 mt-10">

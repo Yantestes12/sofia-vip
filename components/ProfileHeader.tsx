@@ -104,7 +104,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                    >
                      Desbloquear Segredinho 😈 <Lock size={18} />
                    </button>
-                   <span className="text-xs text-zinc-400 font-medium">✨ Por apenas R$ 4,50</span>
+                   <span className="text-xs text-zinc-400 font-medium">✨ A partir de R$ 5,00</span>
                  </div>
                )}
             </div>

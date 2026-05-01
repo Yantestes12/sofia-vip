@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, CheckCircle2, ShieldAlert, Timer, Copy, Gem, AlertTriangle } from './Icons';
 
+import { getDiscount } from './AgeVerificationModal';
+
 const PROMO_STORAGE_KEY = 'sofia_promo_start';
 
 interface PaymentModalProps {
@@ -9,6 +11,7 @@ interface PaymentModalProps {
   onSuccess: () => void;
   onOpenVazados?: () => void;
   leadLocation?: string;
+  isAgeVerified?: boolean;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, onOpenVazados, leadLocation }) => {
@@ -19,8 +22,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [copied, setCopied] = useState(false);
   const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
-  // Preço fixo R$4,50
-  const currentPrice = 4.50;
+  // Preço base R$9,90 com desconto de verificação de idade
+  const discount = getDiscount();
+  const basePrice = 9.90;
+  const currentPrice = Math.max(basePrice - discount, 1.00);
 
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
@@ -266,9 +271,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
             <div className="bg-zinc-950 rounded-xl p-4 mb-5 border border-zinc-800">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-zinc-400 text-sm font-medium">Segredinho Completo 😈</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-white font-black">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
-                </div>
+                <span className="text-white font-black">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
               </div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-zinc-400 text-sm font-medium">Vídeos Sem Censura</span>
@@ -278,10 +281,22 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                 <span className="text-zinc-400 text-sm font-medium">Fotos Proibidas</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
+              {discount > 0 && (
+                <>
+                  <div className="h-px bg-zinc-800 my-3"></div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-emerald-400 text-sm font-bold flex items-center gap-1">✅ Desconto Verificação</span>
+                    <span className="text-emerald-400 font-black">- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                </>
+              )}
               <div className="h-px bg-zinc-800 my-3"></div>
               <div className="flex justify-between items-center">
                 <span className="text-white font-bold">Total a pagar</span>
-                <span className="text-amber-500 font-black text-xl">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
+                <div className="flex items-center gap-2">
+                  {discount > 0 && <span className="text-zinc-500 line-through text-sm">R$ {basePrice.toFixed(2).replace('.', ',')}</span>}
+                  <span className="text-amber-500 font-black text-xl">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
+                </div>
               </div>
             </div>
 
@@ -421,9 +436,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
                 {/* Preview dos vídeos */}
                 <div className="grid grid-cols-3 gap-1.5 mb-4">
-                  {['foto22.jpg', 'foto20.jpg', 'foto21.jpg'].map((img, i) => (
+                  {['foto22.webp', 'foto20.webp', 'foto21.webp'].map((img, i) => (
                     <div key={i} className="relative aspect-square rounded-lg overflow-hidden">
-                      <img src={`https://secreto.meuprivacy.digital/acesso/${img}`} className="w-full h-full object-cover blur-[3px] opacity-60" alt="" />
+                      <img src={`https://secreto.meuprivacy.digital/nataliexking/${img}`} className="w-full h-full object-cover blur-[3px] opacity-60" alt="" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <Lock className="w-5 h-5 text-red-500" />
                       </div>

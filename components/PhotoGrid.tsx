@@ -18,9 +18,9 @@ interface PhotoItem {
 const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
-  const photos = Array.from({ length: 48 }).map((_, i) => ({
+  const photos = Array.from({ length: 30 }).map((_, i) => ({
     id: i,
-    url: `https://secreto.meuprivacy.digital/acesso/foto${i + 1}.jpg`,
+    url: `https://secreto.meuprivacy.digital/nataliexking/foto${i + 1}.webp`,
     // Exatamente 50% bloqueado (índices pares)
     isLocked: i % 2 === 0,
     likes: Math.floor(Math.random() * 8000) + 1000,
@@ -43,7 +43,7 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
           <ImageIcon className="w-5 h-5 text-amber-400" /> Galeria Privada
         </h3>
         <span className="bg-amber-500/10 text-amber-400 text-xs font-black px-4 py-1.5 rounded-full border border-amber-500/20">
-          48 MÍDIAS
+          30 MÍDIAS
         </span>
       </div>
 
@@ -73,7 +73,7 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
                   <Lock className="w-5 h-5 text-pink-400 mb-1 drop-shadow-lg" />
                   {blurPx >= 10 && (
-                    <span className="bg-pink-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">R$ 4,50</span>
+                    <span className="bg-pink-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">R$ 9,90</span>
                   )}
                 </div>
               ) : (

@@ -30,12 +30,12 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ onOpenSubscription, isVip }
     "Explorando cada buraquinho 🔎", "Gemidos reais: Pegada forte 🔊"
   ];
 
-  // Lista de exatamente 48 vídeos
-  const videos = Array.from({ length: 48 }).map((_, i) => ({
+  // Lista de 16 vídeos (video.mp4 + video1-15.mp4)
+  const videos = Array.from({ length: 16 }).map((_, i) => ({
     id: i,
     title: videoTitles[i % videoTitles.length] + ` (Exclusivo #${i + 1})`,
-    url: `https://secreto.meuprivacy.digital/acesso/video${i + 1}.mp4`,
-    thumbnail: `https://secreto.meuprivacy.digital/acesso/foto${i + 1}.jpg`,
+    url: `https://secreto.meuprivacy.digital/nataliexking/${i === 0 ? 'video' : `video${i}`}.mp4`,
+    thumbnail: `https://secreto.meuprivacy.digital/nataliexking/foto${(i % 30) + 1}.webp`,
     duration: `${Math.floor(Math.random() * 8) + 2}:${Math.floor(Math.random() * 50) + 10}`,
     views: `${Math.floor(Math.random() * 250) + 30}k`,
     // Exatamente 50% bloqueado (índices pares)
@@ -58,7 +58,7 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ onOpenSubscription, isVip }
           <VideoIcon className="w-5 h-5 text-amber-400" /> Cine Sofia Privê
         </h3>
         <span className="bg-amber-500/10 text-amber-400 text-xs font-black px-4 py-1.5 rounded-full border border-amber-500/20">
-          48 VÍDEOS
+          16 VÍDEOS
         </span>
       </div>
 

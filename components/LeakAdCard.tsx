@@ -38,7 +38,7 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
         >
           <div className="relative h-52 w-full overflow-hidden">
             <img 
-              src="https://secreto.meuprivacy.digital/acesso/foto6.jpg" 
+              src="https://secreto.meuprivacy.digital/nataliexking/foto6.webp" 
               alt="Leak" 
               className="w-full h-full object-cover blur-[4px] opacity-60 scale-110"
             />
@@ -74,7 +74,7 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
                onClick={(e) => { e.stopPropagation(); onVipClick(); }}
                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white rounded-xl py-3.5 flex items-center justify-center transition-colors shadow-[0_0_20px_rgba(236,72,153,0.3)] mt-2"
              >
-               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={14} className="fill-white" /> SEGREDINHO — R$ 4,50</span>
+               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={14} className="fill-white" /> SEGREDINHO — R$ 9,90</span>
              </button>
 
              <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest mt-3">
@@ -100,7 +100,7 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
         >
           <div className="relative h-44 w-full overflow-hidden">
             <img 
-              src="https://secreto.meuprivacy.digital/acesso/foto6.jpg" 
+              src="https://secreto.meuprivacy.digital/nataliexking/foto6.webp" 
               alt="Leak" 
               className="w-full h-full object-cover blur-[4px] opacity-60 hover:scale-110 transition-transform duration-700"
             />
