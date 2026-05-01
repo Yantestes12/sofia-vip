@@ -269,26 +269,23 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
           </h3>
 
           <p className="text-zinc-400 text-sm leading-relaxed">
-            Meus conteúdos mais íntimos por um preço que <span className="text-white font-bold">eu nunca mais vou oferecer</span>... me ajuda a pagar minha faculdade? 🥺
+            Eu gravei um vídeo especial pra você... mas preciso ter certeza que você é <span className="text-white font-bold">maior de idade</span> 🔞
           </p>
 
-          <div className="bg-zinc-950 rounded-xl p-4 border border-pink-500/20">
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-zinc-500 line-through text-lg">R$ 9,90</span>
-              <span className="text-pink-400 font-black text-4xl">R$ 9,90</span>
-            </div>
-            <p className="text-pink-400/60 text-[9px] mt-1 font-bold uppercase">Oferta exclusiva de saída • Não vai aparecer de novo</p>
+          <div className="bg-zinc-950 rounded-xl p-4 border border-blue-500/20">
+            <p className="text-blue-400 font-bold text-center">🔐 Verificação de idade necessária</p>
+            <p className="text-zinc-500 text-[10px] mt-1 text-center font-bold uppercase">Confirme sua idade e receba uma foto personalizada com seu nome 💋</p>
           </div>
 
           <button
             onClick={() => { setShow(false); onSubscribe(); }}
-            className="w-full py-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
           >
-            😈 QUERO O SEGREDINHO POR R$ 9,90
+            🔐 VERIFICAR MINHA IDADE
           </button>
 
           <button onClick={() => setShow(false)} className="text-zinc-600 text-xs font-bold uppercase hover:text-zinc-400 transition-colors">
-            Não, prefiro pagar mais depois
+            Agora não
           </button>
         </div>
       </div>
@@ -300,38 +297,38 @@ const ExitIntentPopup: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe })
 const CHAT_VARIATIONS = [
   [
     { delay: 0, text: "Oi amor 😏", typing: 1500 },
-    { delay: 2500, text: "Gostou dos meus conteúdos? 💕", typing: 2000 },
-    { delay: 5500, text: "Tenho uns vídeos BEM mais ousados guardados... 🔥", typing: 2500 },
-    { delay: 9000, text: "Desbloqueia meu Segredinho que eu te mostro TUDO... sem tabu nenhum 😈💦", typing: 3000 },
-    { delay: 13500, text: "É só R$ 9,90... me ajuda a pagar a faculdade 🥺", typing: 1500 },
+    { delay: 2500, text: "Tô doida pra te mandar um vídeo que gravei hoje...", typing: 2000 },
+    { delay: 5500, text: "Mas preciso ter certeza que você é de maior 🔞", typing: 2500 },
+    { delay: 9000, text: "Faz a verificação de idade rapidinho? Depois eu te mando uma foto com seu nome escrito de batom aqui nos meus peitos 😈💋", typing: 3500 },
+    { delay: 14000, text: "É rapidinho, prometo que vai valer a pena... 🥺🔥", typing: 1500 },
   ],
   [
     { delay: 0, text: "Oiii 🥰", typing: 1200 },
-    { delay: 2000, text: "Que bom que você veio ver meus conteúdos...", typing: 2000 },
-    { delay: 5000, text: "Mas o melhor mesmo eu escondi no meu Segredinho 😈", typing: 2500 },
-    { delay: 8500, text: "São coisas que eu tenho muita vergonha de mostrar pra qualquer um 🙈💦", typing: 3000 },
-    { delay: 12500, text: "Desbloqueia vai... é R$ 9,90, menos que um pão com presunto 🥺", typing: 1800 },
+    { delay: 2000, text: "Que bom que você tá aqui... eu gravei um vídeo especial", typing: 2000 },
+    { delay: 5000, text: "Só que eu não posso mostrar pra qualquer um 🙈", typing: 2500 },
+    { delay: 8500, text: "Preciso confirmar que você é maior de idade... se confirmar, te mando uma surpresa personalizada com seu nome 💕", typing: 3500 },
+    { delay: 13000, text: "Faz a verificação? Prometo que depois a gente se diverte juntos 😈", typing: 2000 },
   ],
   [
     { delay: 0, text: "Ei você 👀", typing: 1000 },
-    { delay: 2000, text: "Tô vendo que tá curtindo né? 😏", typing: 1800 },
-    { delay: 4800, text: "Imagina o que eu guardo no meu Segredinho então... 🤫🔥", typing: 2500 },
-    { delay: 8300, text: "Vídeos que eu NUNCA postaria em lugar nenhum 😈", typing: 2200 },
-    { delay: 11500, text: "Me ajuda com R$ 9,90? Preciso pagar minha faculdade amor 📚🥺", typing: 2000 },
+    { delay: 2000, text: "Tô aqui te observando... quer ver o que eu preparei? 😏", typing: 2000 },
+    { delay: 5000, text: "Gravei um vídeo SÓ pra quem confirmar a idade comigo 🔞🔥", typing: 2500 },
+    { delay: 8500, text: "E pra quem verificar... eu faço uma foto exclusiva com o nome dele de batom aqui 💋", typing: 3000 },
+    { delay: 12500, text: "Verifica logo amor, tô esperando... 🥺", typing: 1800 },
   ],
   [
     { delay: 0, text: "Oi gatinho 😘", typing: 1300 },
     { delay: 2300, text: "Sabia que você ia aparecer por aqui...", typing: 2000 },
-    { delay: 5300, text: "Quero te mostrar umas coisas que ninguém viu ainda 🤫", typing: 2500 },
-    { delay: 8800, text: "Tá tudo no meu Segredinho 😈 é meu conteúdo mais safado", typing: 2800 },
-    { delay: 12600, text: "São só R$ 9,90 pra desbloquear tudo... pra sempre 💕", typing: 1500 },
+    { delay: 5300, text: "Tenho um presente pra você, mas primeiro preciso saber se você é de maior 🔞", typing: 3000 },
+    { delay: 9300, text: "Se confirmar, te mando um vídeo e uma foto minha com seu nome escrito de batom nos meus peitos 😈💋", typing: 3500 },
+    { delay: 13800, text: "Vai demorar? Tô ansiosa pra te mostrar 🥺💦", typing: 1500 },
   ],
   [
     { delay: 0, text: "Amor!! 💕", typing: 1000 },
     { delay: 2000, text: "Obrigada por estar aqui comigo 🥰", typing: 1800 },
-    { delay: 4800, text: "Eu gravei uns vídeos muito ousados ontem... tô morrendo de vergonha 🙈", typing: 3000 },
-    { delay: 8800, text: "Coloquei tudo no Segredinho... só pra quem realmente me apoia 😈💦", typing: 2800 },
-    { delay: 12600, text: "R$ 9,90 e você vê TUDO... me ajuda na faculdade? 🥺📚", typing: 1800 },
+    { delay: 4800, text: "Eu quero muito te mandar uns conteúdos bem ousados que eu gravei ontem 🙈", typing: 3000 },
+    { delay: 8800, text: "Mas por segurança preciso que você confirme sua idade... depois disso eu te mando tudo, e ainda faço uma foto personalizada com seu nome de batom 💋😈", typing: 4000 },
+    { delay: 13800, text: "Faz a verificação? É rapidinho e depois a gente conversa melhor... 🥺🔥", typing: 2000 },
   ],
 ];
 
@@ -445,7 +442,7 @@ const FakeSofiaChat: React.FC<{ onSubscribe: () => void }> = ({ onSubscribe }) =
               onClick={() => { setIsOpen(false); onSubscribe(); }}
               className="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 text-black font-black uppercase text-xs rounded-xl active:scale-[0.97] transition-transform flex items-center justify-center gap-2"
             >
-              🤫 DESBLOQUEAR SEGREDINHO — R$ 9,90
+              🔐 VERIFICAR MINHA IDADE
             </button>
           </div>
         </div>
@@ -483,15 +480,15 @@ const ReturnVisitorBanner: React.FC<{ onSubscribe: () => void }> = ({ onSubscrib
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[100] animate-fade-in">
-      <div className="bg-gradient-to-r from-amber-500 to-yellow-500 px-4 py-3 flex items-center justify-center gap-3 shadow-lg">
-        <span className="text-black text-xs sm:text-sm font-black uppercase text-center leading-tight">
-          🎉 BEM-VINDO DE VOLTA! Segredinho por <span className="line-through opacity-60">R$ 9,90</span> <span className="text-lg">R$ 9,90</span>
+      <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-3 flex items-center justify-center gap-3 shadow-lg">
+        <span className="text-white text-xs sm:text-sm font-black uppercase text-center leading-tight">
+          🔐 BEM-VINDO DE VOLTA! Verifique sua idade e desbloqueie conteúdos exclusivos
         </span>
         <button
           onClick={() => { handleDismiss(); onSubscribe(); }}
-          className="shrink-0 bg-black text-amber-400 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-900 transition-colors"
+          className="shrink-0 bg-white text-blue-600 px-4 py-1.5 rounded-lg text-[10px] font-black uppercase hover:bg-zinc-100 transition-colors"
         >
-          PEGAR
+          VERIFICAR
         </button>
         <button onClick={handleDismiss} className="shrink-0 text-black/40 hover:text-black text-lg">✕</button>
       </div>
@@ -732,7 +729,7 @@ const App: React.FC = () => {
       <ProfileHeader 
         profile={profileData} 
         isVip={isVip}
-        onPurchase={() => setShowPaymentModal(true)}
+        onPurchase={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)}
       />
 
       <Stories 
@@ -777,18 +774,27 @@ const App: React.FC = () => {
       {/* Sticky CTA Bar */}
       {!isVip && !showPaymentModal && !showAgeModal && (
         <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-md px-4 py-3 animate-fade-in">
-          <button 
-            onClick={() => setShowPaymentModal(true)}
-            className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
-          >
-            🔥 Conteúdos bloqueados — DESBLOQUEAR {vipDisplayPrice}
-          </button>
+          {isAgeVerified ? (
+            <button 
+              onClick={() => setShowPaymentModal(true)}
+              className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            >
+              🔥 Conteúdos bloqueados — DESBLOQUEAR {vipDisplayPrice}
+            </button>
+          ) : (
+            <button 
+              onClick={() => setShowAgeModal(true)}
+              className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(59,130,246,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2"
+            >
+              🔒 Verificar idade para desbloquear conteúdos
+            </button>
+          )}
         </div>
       )}
 
-      {!isVip && <ExitIntentPopup onSubscribe={() => setShowPaymentModal(true)} />}
-      {!isVip && <FakeSofiaChat onSubscribe={() => setShowPaymentModal(true)} />}
-      {!isVip && <ReturnVisitorBanner onSubscribe={() => setShowPaymentModal(true)} />}
+      {!isVip && <ExitIntentPopup onSubscribe={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />}
+      {!isVip && <FakeSofiaChat onSubscribe={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />}
+      {!isVip && <ReturnVisitorBanner onSubscribe={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />}
 
       <footer className="py-12 text-center bg-zinc-950 text-zinc-700 text-xs border-t border-zinc-900 mt-10">
         <div className="px-4">

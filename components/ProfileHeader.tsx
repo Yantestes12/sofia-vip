@@ -100,11 +100,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                  <div className="flex flex-col items-center md:items-end gap-3">
                    <button 
                      onClick={onPurchase}
-                     className="bg-pink-500 hover:bg-pink-400 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+                     className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
                    >
-                     Desbloquear Segredinho 😈 <Lock size={18} />
+                     🔐 Verificar Idade <Lock size={18} />
                    </button>
-                   <span className="text-xs text-zinc-400 font-medium">✨ A partir de R$ 5,00</span>
+                   <span className="text-xs text-zinc-400 font-medium">🔒 Necessário para desbloquear conteúdos</span>
                  </div>
                )}
             </div>

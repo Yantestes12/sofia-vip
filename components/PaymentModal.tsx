@@ -262,7 +262,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
             
             <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
               Amor, esses são os meus conteúdos mais íntimos... coisas que eu <span className="text-white font-bold">tenho vergonha de postar</span> em qualquer lugar 🙈💦<br/><br/>
-              Me ajuda desbloqueando? O valor é só pro meu café na padaria e pão com presunto depois da faculdade 🥺📚
+              Desbloqueando você ganha acesso <span className="text-amber-400 font-bold">VITALÍCIO</span> — pra sempre, sem cobranças extras 💕
             </p>
 
 
@@ -279,6 +279,18 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-zinc-400 text-sm font-medium">Fotos Proibidas</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400 text-sm font-medium">Ao Vivo Exclusivo 🔴</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400 text-sm font-medium">Comentários VIP 💬</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-amber-400 text-sm font-bold">Acesso Vitalício ♾️</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
               {discount > 0 && (
@@ -325,7 +337,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               onClick={handleGeneratePix}
               className="w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              😈 DESBLOQUEAR SEGREDINHO — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-white" />
+              😈 DESBLOQUEAR VIP VITALÍCIO — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-white" />
             </button>
             <div className="flex items-center justify-center gap-2 mt-4 text-zinc-500 text-xs font-medium">
               <ShieldAlert className="w-4 h-4" /> Pagamento 100% Seguro e Anônimo

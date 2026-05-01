@@ -39,8 +39,8 @@ const VideoPreview: React.FC<{
           <Lock className="w-7 h-7 text-pink-400 mb-2 drop-shadow-lg" />
           <p className="text-white text-[10px] font-bold mb-2">Prévia de 3s • Vídeo completo bloqueado</p>
           <button onClick={onUnlock}
-            className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-[0_0_20px_rgba(236,72,153,0.4)] active:scale-[0.97] transition-transform">
-            DESBLOQUEAR — {vipPrice}
+            className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-lg active:scale-[0.97] transition-transform">
+            {vipPrice}
           </button>
           <p className="text-zinc-400 text-[10px] mt-2 font-bold">❤️ {likes} curtidas</p>
         </div>
@@ -89,54 +89,119 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
   const [showCommentPrompt, setShowCommentPrompt] = useState<number | null>(null);
 
   const discount = isAgeVerified ? 4.90 : 0;
-  const vipPrice = isAgeVerified ? `R$ ${(9.90 - discount).toFixed(2).replace('.',',')}` : 'R$ 9,90';
+  const lockMessage = isAgeVerified ? undefined : '🔒 Verificação de idade necessária';
+  const vipPrice = isAgeVerified ? `R$ ${(9.90 - discount).toFixed(2).replace('.',',')}` : '';
+  const onLockClick = isAgeVerified ? onOpenSubscription : onRequestAgeVerification;
 
   const getBlurLevel = (lockedIdx: number): number => {
     const map: Record<number, number> = { 0: 4, 1: 6, 2: 10, 3: 14, 4: 18, 5: 22 };
     return map[Math.min(lockedIdx, 5)] || 22;
   };
 
-  // Posts from Sofia Oliveira (new model) and Sofia Elle (old model/friend)
-  const posts = [
-    // Sofia Oliveira - new model
-    { id: 1, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Bom dia amores! Tirei essa foto agora de manhã pra vocês... gostaram? 💕☀️",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto3.webp", isVideo: false, likes: "4.8k", comments: "342", isLocked: false },
-    { id: 2, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Gravei esse vídeo pra quem me apoia... quem desbloqueou vai entender 😈🔥",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video3.mp4", isVideo: true, likes: "10.2k", comments: "610", isLocked: true },
-    // Sofia Elle - friend (old model)
-    { id: 3, creator: 'elle', name: 'Sofia Elle', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto15.webp',
-      text: "Olha a foto que minha amiga Sofia tirou de mim 📸 ficou boa né? 😏",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", isVideo: false, likes: "3.1k", comments: "180", isLocked: false },
-    { id: 4, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Check-in no espelho... tá tudo no lugar né? 😉👀🍑",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto10.webp", isVideo: false, likes: "5.4k", comments: "215", isLocked: false },
-    { id: 5, creator: 'elle', name: 'Sofia Elle', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto15.webp',
-      text: "A Sofia me convenceu a gravar esse vídeo... tô morrendo de vergonha 🙈💦",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video5.mp4", isVideo: true, likes: "8.7k", comments: "520", isLocked: true },
-    // Vazados card insertion point (after 5 posts)
-    { id: 6, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Essa lingerie nova que comprei... vocês aprovam? 👗😏🔥",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto19.webp", isVideo: false, likes: "7.1k", comments: "430", isLocked: false },
-    { id: 7, creator: 'elle', name: 'Sofia Elle', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto15.webp',
-      text: "Conteúdo que eu gravei escondido... a Sofia nem sabe que eu postei 🤫",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto22.webp", isVideo: false, likes: "9.8k", comments: "1.1k", isLocked: true },
-    { id: 8, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Senti a música e deixei o corpo levar... olha como eu danço 💃🍑",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video8.mp4", isVideo: true, likes: "11.4k", comments: "720", isLocked: true },
-    { id: 9, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Foto que eu tenho vergonha de mostrar pra qualquer um... só pra vocês 🙈",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto27.webp", isVideo: false, likes: "6.3k", comments: "490", isLocked: false },
-    { id: 10, creator: 'elle', name: 'Sofia Elle', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto15.webp',
-      text: "Eu e a Sofia fizemos um combinado... se vocês desbloquearem a gente mostra TUDO juntas 😈👯‍♀️",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video12.mp4", isVideo: true, likes: "21k", comments: "2.5k", isLocked: true },
-    { id: 11, creator: 'sofia', name: 'Sofia Oliveira', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp',
-      text: "Não consigo pensar em outra coisa hoje... alguém vem apagar meu fogo? 🌡️🔥",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto28.webp", isVideo: false, likes: "32k", comments: "4.8k", isLocked: false },
-    { id: 12, creator: 'elle', name: 'Sofia Elle', avatar: 'https://secreto.meuprivacy.digital/nataliexking/foto15.webp',
-      text: "Meu vídeo mais ousado até agora... tô nervosa de postar isso 😳🔞",
-      mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video10.mp4", isVideo: true, likes: "15.6k", comments: "1.8k", isLocked: true },
+  // Captions for Sofia Oliveira (new model)
+  const sofiaCaptions = [
+    "Bom dia amores! Tirei essa foto agora de manhã pra vocês 💕☀️",
+    "Gravei esse vídeo pra quem me apoia... quem desbloquear vai entender 😈🔥",
+    "Check-in no espelho... tá tudo no lugar né? 😉👀🍑",
+    "Essa lingerie nova que comprei... vocês aprovam? 👗😏🔥",
+    "Senti a música e deixei o corpo levar... 💃🍑",
+    "Foto que eu tenho vergonha de mostrar pra qualquer um 🙈",
+    "Não consigo pensar em outra coisa hoje... 🌡️🔥",
+    "Acordei assim e resolvi tirar foto... gostaram? 📸💋",
+    "Tô me sentindo poderosa hoje... quem aguenta? 😈",
+    "Olha o que preparei pra vocês... 🤫🔥",
+    "Vocês pediram mais e aqui estou eu... sem filtro 😏💦",
+    "Esse vídeo foi o mais ousado que já gravei... 🙈🔞",
+    "Dia preguiçoso de ficar na cama... vem comigo? 🛏️💕",
+    "Acabei de sair do banho... tô quentinha ainda 🚿🔥",
+    "Preparei uma surpresa... só pra quem verificar a idade 😈💋",
+  ];
+
+  // Captions for Sofia Elle (friend/old model)
+  const elleCaptions = [
+    "Olha a foto que minha amiga Sofia tirou de mim 📸 ficou boa né? 😏",
+    "A Sofia me convenceu a postar isso... tô morrendo de vergonha 🙈💦",
+    "Conteúdo que eu gravei escondido... a Sofia nem sabe 🤫",
+    "Meu vídeo mais ousado até agora... tô nervosa 😳🔞",
+    "Eu e a Sofia fizemos um combinado... desbloqueia pra ver 😈👯‍♀️",
+    "A Sofia disse que vocês iam gostar dessa foto... 📸💕",
+    "Gravei esse vídeo especial pra vocês... me contem o que acharam 🙈",
+    "Minha amiga me convenceu a mostrar meu lado mais safado 😈",
+    "Postando aqui no perfil da Sofia... espero que gostem 💋",
+    "Essa foto eu tinha medo de postar... mas vou confiar em vocês 🔥",
+  ];
+
+  const BASE_NEW = 'https://secreto.meuprivacy.digital/nataliexking';
+  const BASE_OLD = 'https://secreto.meuprivacy.digital/acesso';
+  const AVATAR_SOFIA = `${BASE_NEW}/foto1.webp`;
+  const AVATAR_ELLE = `${BASE_OLD}/foto22.jpg`;
+
+  // Generate all posts dynamically
+  const allPosts: any[] = [];
+  let postId = 1;
+
+  // Sofia Oliveira photos (30 photos, ~60% locked)
+  for (let i = 1; i <= 30; i++) {
+    allPosts.push({
+      id: postId++, creator: 'sofia', name: 'Sofia Oliveira', avatar: AVATAR_SOFIA,
+      text: sofiaCaptions[(i - 1) % sofiaCaptions.length],
+      mediaUrl: `${BASE_NEW}/foto${i}.webp`, isVideo: false,
+      likes: `${(Math.random() * 30 + 2).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 800 + 100)}`,
+      isLocked: i % 5 !== 0 && i % 3 !== 0, // ~60% locked
+    });
+  }
+
+  // Sofia Oliveira videos (16 videos, ~75% locked)
+  for (let i = 0; i <= 15; i++) {
+    const videoUrl = i === 0 ? `${BASE_NEW}/video.mp4` : `${BASE_NEW}/video${i}.mp4`;
+    allPosts.push({
+      id: postId++, creator: 'sofia', name: 'Sofia Oliveira', avatar: AVATAR_SOFIA,
+      text: sofiaCaptions[(i + 5) % sofiaCaptions.length],
+      mediaUrl: videoUrl, isVideo: true,
+      likes: `${(Math.random() * 40 + 5).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1500 + 200)}`,
+      isLocked: i % 4 !== 0, // ~75% locked
+    });
+  }
+
+  // Sofia Elle photos (old model, 30 photos, ~70% locked)
+  for (let i = 1; i <= 30; i++) {
+    allPosts.push({
+      id: postId++, creator: 'elle', name: 'Sofia Elle', avatar: AVATAR_ELLE,
+      text: elleCaptions[(i - 1) % elleCaptions.length],
+      mediaUrl: `${BASE_OLD}/foto${i}.jpg`, isVideo: false,
+      likes: `${(Math.random() * 20 + 1).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 600 + 80)}`,
+      isLocked: i % 10 !== 0 && i % 7 !== 0, // ~70% locked
+    });
+  }
+
+  // Sofia Elle videos (old model, 15 videos, ~80% locked)
+  for (let i = 1; i <= 15; i++) {
+    allPosts.push({
+      id: postId++, creator: 'elle', name: 'Sofia Elle', avatar: AVATAR_ELLE,
+      text: elleCaptions[(i + 3) % elleCaptions.length],
+      mediaUrl: `${BASE_OLD}/video${i}.mp4`, isVideo: true,
+      likes: `${(Math.random() * 25 + 3).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1000 + 150)}`,
+      isLocked: i % 5 !== 0, // ~80% locked
+    });
+  }
+
+  // Interleave: Sofia first, then friend section, then mixed
+  const sofiaPosts = allPosts.filter(p => p.creator === 'sofia');
+  const ellePosts = allPosts.filter(p => p.creator === 'elle');
+
+  // Shuffle within each group for variety
+  const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5);
+  const shuffledSofia = shuffle([...sofiaPosts]);
+  const shuffledElle = shuffle([...ellePosts]);
+
+  // Build final feed: 6 Sofia → Vazados → 4 Sofia → Friend separator → All Elle → Rest Sofia
+  const posts: any[] = [
+    ...shuffledSofia.slice(0, 6),
+    { id: 'vazados', type: 'vazados' } as any,
+    ...shuffledSofia.slice(6, 10),
+    { id: 'friend-separator', type: 'separator' } as any,
+    ...shuffledElle,
+    ...shuffledSofia.slice(10),
   ];
 
   const handleCommentClick = (postId: number) => {
@@ -148,11 +213,11 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     }
   };
 
-  // Build feed items with Vazados card after 5th post
-  const feedItems: { type: 'post' | 'vazados'; data?: any }[] = [];
-  posts.forEach((post, idx) => {
-    feedItems.push({ type: 'post', data: post });
-    if (idx === 4) feedItems.push({ type: 'vazados' });
+  // Build feed items
+  const feedItems = posts.map(p => {
+    if (p.type === 'vazados') return { type: 'vazados' as const, data: null };
+    if (p.type === 'separator') return { type: 'separator' as const, data: null };
+    return { type: 'post' as const, data: p };
   });
 
   let sofiaLockedCount = 0;
@@ -162,10 +227,24 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     <div className="max-w-2xl mx-auto space-y-8 pb-12">
       {feedItems.map((item, idx) => {
         if (item.type === 'vazados') {
-          return <VazadosCard key="vazados" onOpen={onOpenVazados} onOpenVip={onOpenSubscription} vipPrice={vipPrice} />;
+          return <VazadosCard key="vazados" onOpen={onOpenVazados} onOpenVip={isAgeVerified ? onOpenSubscription : onRequestAgeVerification} vipPrice={lockMessage || `DESBLOQUEAR — ${vipPrice}`} />;
+        }
+
+        if (item.type === 'separator') {
+          return (
+            <div key="friend-sep" className="relative py-6">
+              <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-pink-500/30"></div></div>
+              <div className="relative flex justify-center">
+                <span className="bg-zinc-950 px-6 py-2 text-pink-400 font-black uppercase text-sm tracking-wider flex items-center gap-2 rounded-full border border-pink-500/20">
+                  👯‍♀️ Conteúdos da minha amiga
+                </span>
+              </div>
+            </div>
+          );
         }
 
         const post = item.data;
+        if (!post) return null;
         const locked = post.isLocked && !isVip;
         let currentLockedIdx = 0;
         if (locked) {
@@ -205,7 +284,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
               {locked ? (
                 <div className="aspect-[3/4] md:aspect-video w-full bg-zinc-950 relative overflow-hidden">
                   {post.isVideo ? (
-                    <VideoPreview src={post.mediaUrl} blurLevel={getBlurLevel(currentLockedIdx)} onUnlock={onOpenSubscription} likes={post.likes} vipPrice={vipPrice} />
+                    <VideoPreview src={post.mediaUrl} blurLevel={getBlurLevel(currentLockedIdx)} onUnlock={onLockClick} likes={post.likes} vipPrice={lockMessage || `DESBLOQUEAR — ${vipPrice}`} />
                   ) : (
                     <>
                       <img src={post.mediaUrl} className="absolute inset-0 w-full h-full object-cover" style={{ filter: `blur(${getBlurLevel(currentLockedIdx)}px)` }} alt="" />
@@ -213,9 +292,9 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
                       {getBlurLevel(currentLockedIdx) >= 8 && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
                           <Lock className="w-8 h-8 text-pink-400 mb-3 drop-shadow-lg" />
-                          <button onClick={onOpenSubscription}
-                            className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-[0_0_20px_rgba(236,72,153,0.4)] active:scale-[0.97] transition-transform">
-                            DESBLOQUEAR — {vipPrice}
+                          <button onClick={onLockClick}
+                            className={`${isAgeVerified ? 'bg-gradient-to-r from-pink-500 to-rose-500' : 'bg-gradient-to-r from-blue-500 to-blue-600'} text-white py-2.5 px-6 rounded-xl font-black uppercase text-xs shadow-lg active:scale-[0.97] transition-transform`}>
+                            {lockMessage || `DESBLOQUEAR — ${vipPrice}`}
                           </button>
                           <p className="text-zinc-400 text-[10px] mt-2 font-bold">❤️ {post.likes} curtidas</p>
                         </div>
@@ -249,15 +328,100 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
                   </div>
                 )}
               </button>
-              {showCommentPrompt === post.id && (
-                <span className="text-emerald-400 text-xs font-bold animate-fade-in">Em breve! 💬</span>
-              )}
             </div>
+
+            {/* Fake comments (visible after age verification) */}
+            {isAgeVerified && (
+              <div className="px-4 pb-3 space-y-2 border-t border-zinc-800/30">
+                {FAKE_COMMENTS.slice((post.id * 3) % FAKE_COMMENTS.length, (post.id * 3) % FAKE_COMMENTS.length + 2).map((c, ci) => (
+                  <div key={ci} className="flex items-start gap-2 py-1.5">
+                    <div className="w-6 h-6 rounded-full bg-zinc-700 flex items-center justify-center text-[10px] shrink-0">{c.emoji}</div>
+                    <div>
+                      <span className="text-white text-xs font-bold">{c.user}</span>
+                      <span className="text-zinc-400 text-xs ml-2">{c.text}</span>
+                    </div>
+                  </div>
+                ))}
+                {/* Comment input - VIP only */}
+                <div className="flex items-center gap-2 pt-2 border-t border-zinc-800/30">
+                  <input
+                    type="text"
+                    placeholder={isVip ? "Adicione um comentário..." : "💎 Apenas VIPs podem comentar"}
+                    readOnly={!isVip}
+                    onClick={() => { if (!isVip) onOpenSubscription(); }}
+                    className="flex-1 bg-zinc-800/50 text-zinc-400 text-xs px-3 py-2 rounded-lg border border-zinc-700/50 outline-none placeholder-zinc-600 cursor-pointer"
+                  />
+                  {!isVip && <Lock className="w-4 h-4 text-pink-400 shrink-0" />}
+                </div>
+              </div>
+            )}
+
+            {/* Comment prompt toast */}
+            {showCommentPrompt === post.id && (
+              <div className="px-4 pb-3">
+                <span className={`text-xs font-bold ${isAgeVerified ? 'text-pink-400' : 'text-blue-400'} animate-fade-in`}>
+                  {isAgeVerified ? '💎 Apenas VIPs podem comentar' : '🔐 Verifique sua idade primeiro'}
+                </span>
+              </div>
+            )}
           </div>
         );
       })}
+
+      {/* Live Section Card */}
+      <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl">
+        <div className="relative h-56 md:h-72 w-full overflow-hidden">
+          <video
+            src="https://secreto.meuprivacy.digital/nataliexking/video10.mp4"
+            autoPlay muted loop playsInline
+            className={`w-full h-full object-cover ${!isAgeVerified ? 'blur-[12px]' : !isVip ? 'blur-[6px]' : ''}`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-zinc-950/20 to-transparent"></div>
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+            <span className="text-white text-xs font-black uppercase tracking-widest">AO VIVO</span>
+          </div>
+          <div className="absolute top-4 right-4 bg-black/50 px-3 py-1 rounded-full text-white text-[10px] font-bold backdrop-blur-sm">
+            👁 {Math.floor(Math.random() * 300 + 200)} assistindo
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center z-10">
+            <div className="text-center">
+              <Lock className="w-10 h-10 text-white mx-auto mb-3 drop-shadow-lg" />
+              <p className="text-white font-black text-lg uppercase tracking-tight mb-3">
+                {!isAgeVerified ? '🔐 Verifique sua idade' : '😈 Conteúdo VIP'}
+              </p>
+              <button
+                onClick={!isAgeVerified ? onRequestAgeVerification : onOpenSubscription}
+                className={`${!isAgeVerified ? 'bg-gradient-to-r from-blue-500 to-blue-600' : 'bg-gradient-to-r from-pink-500 to-rose-500'} text-white py-3 px-8 rounded-xl font-black uppercase text-sm shadow-lg active:scale-[0.97] transition-transform`}
+              >
+                {!isAgeVerified ? '🔐 VERIFICAR IDADE' : lockMessage || `ASSISTIR AO VIVO — ${vipPrice}`}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="p-4">
+          <p className="text-white font-bold">Sofia Oliveira está ao vivo agora 🔴</p>
+          <p className="text-zinc-500 text-xs mt-1">Conteúdo exclusivo em tempo real • Acesso VIP vitalício</p>
+        </div>
+      </div>
     </div>
   );
 };
+
+// Fake comments pool
+const FAKE_COMMENTS = [
+  { emoji: '🔥', user: 'marcos_rj', text: 'gata demais 😍' },
+  { emoji: '💕', user: 'rafael_sp', text: 'cada dia mais linda' },
+  { emoji: '😈', user: 'pedro_mg', text: 'esse conteúdo é outro nível' },
+  { emoji: '🤤', user: 'lucas_ba', text: 'perfeita demais' },
+  { emoji: '💋', user: 'andre_pr', text: 'meu deus que mulher' },
+  { emoji: '🍑', user: 'carlos_ce', text: 'não aguento mais 🔥' },
+  { emoji: '👀', user: 'thiago_rs', text: 'finalmente desbloqueei, valeu muito' },
+  { emoji: '💎', user: 'bruno_sc', text: 'VIP vale cada centavo' },
+  { emoji: '🔞', user: 'felipe_go', text: 'conteúdo pesado hein 🤫' },
+  { emoji: '😏', user: 'gustavo_pe', text: 'quero mais disso' },
+  { emoji: '🥵', user: 'ricardo_am', text: 'socorro essa mulher' },
+  { emoji: '💰', user: 'vinicius_ma', text: 'melhor investimento do mês' },
+];
 
 export default Feed;

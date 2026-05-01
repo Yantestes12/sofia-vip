@@ -28,17 +28,29 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
   const storyOpenTime = useRef<number>(0);
 
   const stories: StoryItem[] = [
-    { id: 1, label: "Novo 🔥", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto2.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto2.webp", isVideo: false, isLocked: false },
-    { id: 2, label: "Hoje 💕", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", isVideo: false, isLocked: false },
-    { id: 3, label: "Prévia 🎥", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto12.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/video3.mp4", isVideo: true, isLocked: false },
-    { id: 4, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", isVideo: false, isLocked: true },
-    // Vazados highlight - special
+    { id: 1, label: "Hoje 💕", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", isVideo: false, isLocked: false },
+    { id: 2, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", isVideo: false, isLocked: true },
+    // Vazados highlight - opens vazados stories inline
     { id: 99, label: "VAZADOS", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto20.webp", mediaUrl: "", isVideo: false, isLocked: false, isVazado: true, title: "⚠️ VAZADOS" },
   ];
 
+  // Vazados stories (shown when clicking the Vazados highlight)
+  const vazadosStories: StoryItem[] = [
+    { id: 100, label: "Vazado 1", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto18.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto18.webp", isVideo: false, isLocked: false },
+    { id: 101, label: "Vazado 2", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto22.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto22.webp", isVideo: false, isLocked: false },
+    { id: 102, label: "Vazado 3", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto25.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto25.webp", isVideo: false, isLocked: false },
+  ];
+
+  const [showingVazados, setShowingVazados] = useState(false);
+
   const handleStoryClick = (story: StoryItem) => {
     if (story.isVazado) {
-      onOpenVazados();
+      // Open vazados as inline stories
+      setShowingVazados(true);
+      setActiveStory(vazadosStories[0]);
+      setProgress(0);
+      setAgeTimerFired(false);
+      storyOpenTime.current = Date.now();
       return;
     }
     const locked = story.isLocked && !isVip;
@@ -69,20 +81,20 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
     const duration = 6000;
     const interval = 50;
     const step = (interval / duration) * 100;
+    const currentList = showingVazados ? vazadosStories : stories.filter(s => !s.isVazado && (!s.isLocked || isVip));
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
-          const availStories = stories.filter(s => !s.isVazado && (!s.isLocked || isVip));
-          const currentIdx = availStories.findIndex(s => s.id === activeStory.id);
-          const next = availStories[currentIdx + 1];
+          const currentIdx = currentList.findIndex(s => s.id === activeStory.id);
+          const next = currentList[currentIdx + 1];
           if (next) { setActiveStory(next); return 0; }
-          else { setActiveStory(null); return 0; }
+          else { setActiveStory(null); setShowingVazados(false); return 0; }
         }
         return prev + step;
       });
     }, interval);
     return () => clearInterval(timer);
-  }, [activeStory, isVip]);
+  }, [activeStory, isVip, showingVazados]);
 
   return (
     <>
