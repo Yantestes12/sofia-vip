@@ -1,14 +1,18 @@
 
 import React, { useState, useEffect } from 'react';
 import ProfileHeader from './components/ProfileHeader';
+import Navigation from './components/Navigation';
 import Feed from './components/Feed';
+import PhotoGrid from './components/PhotoGrid';
+import VideoGallery from './components/VideoGallery';
+import LiveSection from './components/LiveSection';
 import ExclusiveLeakPage from './components/ExclusiveLeakPage';
 import SubmundoVazado from './components/SubmundoVazado';
 import LeakAdCard from './components/LeakAdCard';
 import PaymentModal from './components/PaymentModal';
 import Stories from './components/Stories';
 import AgeVerificationModal, { checkAgeVerified, getDiscount } from './components/AgeVerificationModal';
-import { CreatorProfile } from './types';
+import { CreatorProfile, TabType } from './types';
 
 const WELCOME_SEEN_KEY = 'sofia_welcome_seen';
 
@@ -528,7 +532,9 @@ const activateVip = (): void => {
 const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const [step, setStep] = useState<'obrigado' | 'video' | 'done'>('obrigado');
 
-  const handleNext = () => {
+  const handleNext = (e: React.MouseEvent | React.TouchEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (step === 'obrigado') {
       setStep('video');
     } else {
@@ -537,37 +543,61 @@ const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     }
   };
 
+  // Fallback: auto-advance if button seems stuck (after 30s)
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (step === 'obrigado') setStep('video');
+    }, 30000);
+    return () => clearTimeout(timeout);
+  }, [step]);
+
+  const btnStyle: React.CSSProperties = {
+    WebkitTapHighlightColor: 'transparent',
+    WebkitTouchCallout: 'none',
+    WebkitUserSelect: 'none',
+    userSelect: 'none',
+    touchAction: 'manipulation',
+    cursor: 'pointer',
+  };
+
   if (step === 'obrigado') {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 animate-fade-in">
-        <div className="max-w-md w-full text-center space-y-8">
+      <div style={{ minHeight: '100vh', minHeight: '100dvh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+        <div style={{ maxWidth: '28rem', width: '100%', textAlign: 'center' }}>
           {/* Coração animado */}
-          <div className="text-6xl animate-bounce">💕</div>
+          <div style={{ fontSize: '3.75rem', marginBottom: '24px' }} className="animate-bounce">💕</div>
           
           {/* Foto da Sofia */}
-          <div className="relative mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-pink-500/50 shadow-[0_0_40px_rgba(236,72,153,0.3)]">
+          <div style={{ width: '12rem', height: '12rem', borderRadius: '50%', overflow: 'hidden', border: '4px solid rgba(236,72,153,0.5)', margin: '0 auto 24px', boxShadow: '0 0 40px rgba(236,72,153,0.3)' }}>
             <img 
               src="https://secreto.meuprivacy.digital/nataliexking/foto1.webp" 
               alt="Sofia" 
-              className="w-full h-full object-cover"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           </div>
 
           {/* Mensagem de agradecimento */}
-          <div className="space-y-3">
-            <h1 className="text-white font-black text-2xl md:text-3xl leading-tight">
-              Muito obrigado por ter comprado meus conteúdos, amor! 💕
-            </h1>
-            <p className="text-zinc-400 text-sm leading-relaxed">
-              Fico tão feliz que você decidiu me conhecer melhor...<br/>
-              Preparei tudo com muito carinho pra você 🥰
-            </p>
-          </div>
+          <h1 style={{ color: 'white', fontWeight: 900, fontSize: '1.5rem', lineHeight: 1.2, marginBottom: '12px' }}>
+            Muito obrigado por ter comprado meus conteúdos, amor! 💕
+          </h1>
+          <p style={{ color: '#a1a1aa', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '32px' }}>
+            Fico tão feliz que você decidiu me conhecer melhor...<br/>
+            Preparei tudo com muito carinho pra você 🥰
+          </p>
 
-          {/* Botão próximo */}
+          {/* Botão próximo - máxima compatibilidade */}
           <button 
+            type="button"
             onClick={handleNext}
-            className="w-full max-w-xs mx-auto py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-3"
+            onTouchEnd={handleNext}
+            style={{
+              ...btnStyle,
+              width: '100%', maxWidth: '20rem', margin: '0 auto', padding: '16px 24px',
+              background: 'linear-gradient(to right, #ec4899, #f43f5e)',
+              color: 'white', fontWeight: 900, textTransform: 'uppercase' as const, fontSize: '0.875rem',
+              borderRadius: '16px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+              boxShadow: '0 0 30px rgba(236,72,153,0.3)',
+            }}
           >
             Próximo →
           </button>
@@ -576,40 +606,49 @@ const WelcomeFlow: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
     );
   }
 
-  // Step 2: Video + texto sobre o Segredinho
+  // Step 2: Video + texto sobre verificação
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4 animate-fade-in">
-      <div className="max-w-md w-full text-center space-y-6">
+    <div style={{ minHeight: '100vh', minHeight: '100dvh', background: '#09090b', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+      <div style={{ maxWidth: '28rem', width: '100%', textAlign: 'center' }}>
         {/* Vídeo preview */}
-        <div className="relative rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl aspect-[9/16] max-h-[50vh] mx-auto">
+        <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #27272a', maxHeight: '50vh', aspectRatio: '9/16', margin: '0 auto 24px', position: 'relative' }}>
           <video 
             src="https://secreto.meuprivacy.digital/nataliexking/video3.mp4"
             autoPlay 
             loop 
             muted 
             playsInline
-            className="w-full h-full object-cover"
+            webkit-playsinline=""
+            x5-playsinline=""
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-transparent" />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #09090b, transparent, transparent)' }} />
         </div>
 
         {/* Texto explicativo */}
-        <div className="space-y-3 px-2">
-          <p className="text-white text-base leading-relaxed font-medium">
-            Amor, vou te deixar ver <span className="text-pink-400 font-bold">várias coisas liberadas</span> aqui no meu perfil... 🔥
-          </p>
-          <p className="text-zinc-400 text-sm leading-relaxed">
-            Mas os meus <span className="text-white font-bold">melhores conteúdos</span>, aqueles que eu tenho vergonha de postar... estão no meu <span className="text-pink-400 font-black">Segredinho 😈</span>
-          </p>
-          <p className="text-zinc-500 text-xs leading-relaxed">
-            É um valor único que você paga só uma vez e me ajuda a pagar minha faculdade 🥺📚
-          </p>
-        </div>
+        <p style={{ color: 'white', fontSize: '1rem', lineHeight: 1.6, fontWeight: 500, marginBottom: '12px', padding: '0 8px' }}>
+          Amor, vou te deixar ver <span style={{ color: '#f472b6', fontWeight: 700 }}>várias coisas liberadas</span> aqui no meu perfil... 🔥
+        </p>
+        <p style={{ color: '#a1a1aa', fontSize: '0.875rem', lineHeight: 1.6, marginBottom: '8px', padding: '0 8px' }}>
+          Mas os meus <span style={{ color: 'white', fontWeight: 700 }}>melhores conteúdos</span>, preciso primeiro que você <span style={{ color: '#60a5fa', fontWeight: 900 }}>verifique sua idade 🔐</span>
+        </p>
+        <p style={{ color: '#71717a', fontSize: '0.75rem', lineHeight: 1.5, marginBottom: '24px', padding: '0 8px' }}>
+          Depois da verificação te mando uma foto personalizada com seu nome de batom 💋
+        </p>
 
         {/* Botão próximo */}
         <button 
+          type="button"
           onClick={handleNext}
-          className="w-full max-w-xs mx-auto py-4 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase text-sm rounded-2xl shadow-[0_0_30px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-3"
+          onTouchEnd={handleNext}
+          style={{
+            ...btnStyle,
+            width: '100%', maxWidth: '20rem', margin: '0 auto', padding: '16px 24px',
+            background: 'linear-gradient(to right, #ec4899, #f43f5e)',
+            color: 'white', fontWeight: 900, textTransform: 'uppercase' as const, fontSize: '0.875rem',
+            borderRadius: '16px', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+            boxShadow: '0 0 30px rgba(236,72,153,0.3)',
+          }}
         >
           Ver meus conteúdos 🔥
         </button>
@@ -628,6 +667,7 @@ const App: React.FC = () => {
   const [leadLocation, setLeadLocation] = useState<string>('');
   const [showGroupOffer, setShowGroupOffer] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !sessionStorage.getItem(WELCOME_SEEN_KEY));
+  const [activeTab, setActiveTab] = useState<TabType>('feed');
 
   // Verifica VIP no localStorage ao carregar
   useEffect(() => {
@@ -695,7 +735,7 @@ const App: React.FC = () => {
     name: "Sofia Oliveira",
     handle: "sofiaoliveira",
     bio: "Obrigado por ter comprado meus conteúdos amor 💕 Aqui você vai ver meu lado mais íntimo... e se desbloquear meu Segredinho 😈, te mostro TUDO sem censura.",
-    age: 24,
+    age: 19,
     subscribers: "203.4k",
     location: leadLocation,
     tags: ["Amador", "Provocante", "Caseiro", "Lingerie", "Safadinha"],
@@ -724,6 +764,11 @@ const App: React.FC = () => {
   const vipDisplayPrice = discount > 0 ? `R$ ${(9.90 - discount).toFixed(2).replace('.',',')}` : 'R$ 9,90';
   const cityName = leadLocation ? leadLocation.split(',')[0].trim() : '';
 
+  const handleOpenVazados = () => {
+    if (!isAgeVerified) { setShowAgeModal(true); return; }
+    setShowLeakPortal(true);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 pb-24 relative select-none">
       <ProfileHeader 
@@ -732,11 +777,41 @@ const App: React.FC = () => {
         onPurchase={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)}
       />
 
+      {/* Ao Vivo - Top Banner */}
+      <div className="container mx-auto px-4 pt-4">
+        <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl cursor-pointer"
+          onClick={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)}>
+          <div className="relative h-32 w-full overflow-hidden">
+            <video src="https://secreto.meuprivacy.digital/nataliexking/video10.mp4"
+              autoPlay muted loop playsInline
+              className={`w-full h-full object-cover ${!isAgeVerified ? 'blur-[12px]' : !isVip ? 'blur-[6px]' : ''}`} />
+            <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent"></div>
+            <div className="absolute top-3 left-3 flex items-center gap-2">
+              <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
+              <span className="text-white text-[10px] font-black uppercase tracking-widest">AO VIVO</span>
+            </div>
+            <div className="absolute top-3 right-3 bg-black/50 px-2.5 py-1 rounded-full text-white text-[9px] font-bold backdrop-blur-sm">
+              👁 {Math.floor(Math.random() * 300 + 200)} assistindo
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <p className="text-white font-black text-sm uppercase tracking-tight mb-2">
+                  {!isAgeVerified ? '🔐 Verifique sua idade para assistir' : '😈 Conteúdo VIP — Acesso Vitalício'}
+                </p>
+                <div className={`${!isAgeVerified ? 'bg-blue-500/80' : 'bg-pink-500/80'} text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block`}>
+                  {!isAgeVerified ? '🔐 VERIFICAR IDADE' : `ASSISTIR — ${vipDisplayPrice}`}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <Stories 
         isVip={isVip} 
         isAgeVerified={isAgeVerified}
         onOpenSubscription={() => setShowPaymentModal(true)} 
-        onOpenVazados={() => setShowLeakPortal(true)}
+        onOpenVazados={handleOpenVazados}
         onRequestAgeVerification={() => setShowAgeModal(true)}
       />
 
@@ -755,14 +830,44 @@ const App: React.FC = () => {
         isAgeVerified={isAgeVerified}
       />
 
+      <Navigation activeTab={activeTab} setActiveTab={setActiveTab} />
+
       <main className="container mx-auto px-4 py-8 animate-fade-in-up">
-        <Feed 
-          onOpenSubscription={() => setShowPaymentModal(true)} 
-          onOpenVazados={() => setShowLeakPortal(true)} 
-          onRequestAgeVerification={() => setShowAgeModal(true)}
-          isVip={isVip} 
-          isAgeVerified={isAgeVerified}
-        />
+        {activeTab === 'feed' && (
+          <Feed 
+            onOpenSubscription={() => setShowPaymentModal(true)} 
+            onOpenVazados={handleOpenVazados} 
+            onRequestAgeVerification={() => setShowAgeModal(true)}
+            isVip={isVip} 
+            isAgeVerified={isAgeVerified}
+          />
+        )}
+        {activeTab === 'photos' && (
+          <PhotoGrid isVip={isVip} onUnlock={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />
+        )}
+        {activeTab === 'videos' && (
+          <VideoGallery isVip={isVip} onUnlock={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />
+        )}
+        {activeTab === 'live' && (
+          <LiveSection isVip={isVip} onUnlock={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)} />
+        )}
+        {activeTab === 'vazados' && (
+          isAgeVerified ? (
+            <ExclusiveLeakPage onBack={() => setActiveTab('feed')} leadLocation={leadLocation} />
+          ) : (
+            <div className="text-center py-20">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-red-600/10 flex items-center justify-center border-2 border-red-500/30">
+                <span className="text-4xl">🔞</span>
+              </div>
+              <h3 className="text-white font-black text-xl uppercase mb-3">Verificação Necessária</h3>
+              <p className="text-zinc-400 text-sm mb-6 max-w-xs mx-auto">Para acessar os conteúdos vazados, você precisa confirmar que é maior de idade.</p>
+              <button onClick={() => setShowAgeModal(true)}
+                className="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3.5 px-8 rounded-xl font-black uppercase text-sm shadow-lg">
+                🔐 VERIFICAR MINHA IDADE
+              </button>
+            </div>
+          )
+        )}
       </main>
 
       <LeakAdCard onClick={() => setShowLeakPortal(true)} onVipClick={() => setShowPaymentModal(true)} />

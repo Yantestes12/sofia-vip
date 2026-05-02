@@ -212,7 +212,16 @@ const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({ isOpen, onC
               <p className="text-zinc-500 text-xs font-bold mb-2 uppercase tracking-wider">Pix Copia e Cola</p>
               <div className="flex items-center gap-2 bg-zinc-950 p-2 rounded-xl border border-zinc-800">
                 <input type="text" readOnly value={pixData.copiaCola} className="bg-transparent text-zinc-300 text-xs outline-none flex-1 truncate font-mono" />
-                <button onClick={() => { navigator.clipboard.writeText(pixData.copiaCola); setCopied(true); setTimeout(() => setCopied(false), 2500); }}
+                <button onClick={() => { 
+                  const text = pixData.copiaCola;
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); }).catch(() => {
+                      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setCopied(true); setTimeout(() => setCopied(false), 2500);
+                    });
+                  } else {
+                    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); setCopied(true); setTimeout(() => setCopied(false), 2500);
+                  }
+                }}
                   className={`px-3 shrink-0 py-2 ${copied ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'} text-white rounded-lg transition-colors flex items-center gap-1 uppercase text-[10px] font-bold`}>
                   <Copy size={12} /> {copied ? 'COPIADO ✓' : 'COPIAR'}
                 </button>

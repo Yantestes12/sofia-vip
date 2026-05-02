@@ -199,11 +199,15 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, currentPrice }: { onClo
   };
 
   const handleCopy = () => {
-    if (pixData?.copiaCola) {
-      navigator.clipboard.writeText(pixData.copiaCola);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!pixData?.copiaCola) return;
+    const text = pixData.copiaCola;
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(fallback);
+    } else { fallback(); }
   };
 
   return (
@@ -288,7 +292,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(12 * 60 + 45);
 
-  // Timer de promoção Vazados: 6 minutos a R$29,90, depois R$89,00
+  // Timer de promoção Vazados: 6 minutos a R$14,90, depois R$89,00
   const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(29.90);
 
@@ -458,7 +462,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-zinc-400 text-xs line-through">R$ 89,00</span>
-                  <span className="text-green-400 font-black text-lg">R$ 29,90</span>
+                  <span className="text-green-400 font-black text-lg">R$ 14,90</span>
                 </div>
                 <p className="text-green-300/60 text-[9px] mt-1 font-bold">Após o timer, o valor será R$ 89,00 permanentemente</p>
               </div>
@@ -468,7 +472,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
                   <AlertTriangle size={14} className="text-red-400" />
                   <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
                 </div>
-                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 29,90 expirou</p>
+                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 14,90 expirou</p>
               </div>
             )}
 

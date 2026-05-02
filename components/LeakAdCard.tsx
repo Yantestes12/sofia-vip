@@ -72,9 +72,9 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
 
              <button 
                onClick={(e) => { e.stopPropagation(); onVipClick(); }}
-               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white rounded-xl py-3.5 flex items-center justify-center transition-colors shadow-[0_0_20px_rgba(236,72,153,0.3)] mt-2"
+               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white rounded-xl py-3.5 flex items-center justify-center transition-colors shadow-[0_0_20px_rgba(59,130,246,0.3)] mt-2"
              >
-               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={14} className="fill-white" /> SEGREDINHO — R$ 9,90</span>
+               <span className="text-sm font-black uppercase italic tracking-wider flex items-center gap-2">🔐 VERIFICAR IDADE</span>
              </button>
 
              <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest mt-3">
@@ -134,9 +134,9 @@ const LeakAdCard: React.FC<LeakAdCardProps> = ({ onClick, onVipClick }) => {
 
              <button 
                onClick={(e) => { e.stopPropagation(); onVipClick(); }}
-               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white rounded-xl py-3 flex items-center justify-center transition-colors shadow-lg mt-2"
+               className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white rounded-xl py-3 flex items-center justify-center transition-colors shadow-lg mt-2"
              >
-               <span className="text-xs font-black uppercase italic tracking-wider flex items-center gap-2"><Gem size={12} className="fill-white" /> SEGREDINHO 😈</span>
+               <span className="text-xs font-black uppercase italic tracking-wider flex items-center gap-2">🔐 VERIFICAR IDADE</span>
              </button>
           </div>
         </div>

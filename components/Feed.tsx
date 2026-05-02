@@ -166,7 +166,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
   // Sofia Elle photos (old model, 30 photos, ~70% locked)
   for (let i = 1; i <= 30; i++) {
     allPosts.push({
-      id: postId++, creator: 'elle', name: 'Sofia Elle', avatar: AVATAR_ELLE,
+      id: postId++, creator: 'elle', name: 'Camila Elle', avatar: AVATAR_ELLE,
       text: elleCaptions[(i - 1) % elleCaptions.length],
       mediaUrl: `${BASE_OLD}/foto${i}.jpg`, isVideo: false,
       likes: `${(Math.random() * 20 + 1).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 600 + 80)}`,
@@ -177,7 +177,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
   // Sofia Elle videos (old model, 15 videos, ~80% locked)
   for (let i = 1; i <= 15; i++) {
     allPosts.push({
-      id: postId++, creator: 'elle', name: 'Sofia Elle', avatar: AVATAR_ELLE,
+      id: postId++, creator: 'elle', name: 'Camila Elle', avatar: AVATAR_ELLE,
       text: elleCaptions[(i + 3) % elleCaptions.length],
       mediaUrl: `${BASE_OLD}/video${i}.mp4`, isVideo: true,
       likes: `${(Math.random() * 25 + 3).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1000 + 150)}`,
