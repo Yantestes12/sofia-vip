@@ -466,7 +466,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                 <div className="bg-black/40 rounded-xl p-4 border border-red-500/20">
                   <div className="flex items-center justify-center gap-3 mb-1">
                     <span className="text-zinc-500 line-through text-lg">R$ 89,00</span>
-                    <span className="text-red-500 font-black text-3xl">R$ 14,90</span>
+                    <span className="text-red-500 font-black text-3xl">R$ 14,49</span>
                   </div>
                   <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só pra quem desbloqueou o Segredinho</p>
                 </div>
@@ -481,7 +481,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               }}
               className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_30px_rgba(220,38,38,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-3"
             >
-              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 14,90
+              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 14,49
             </button>
 
             {/* Botão pular */}

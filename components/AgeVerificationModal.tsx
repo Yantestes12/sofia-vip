@@ -23,7 +23,7 @@ export const activateAgeVerified = (): void => {
     verified: true,
     token: `age_${Date.now()}_${Math.random().toString(36).substring(2,10)}`,
     verifiedAt: new Date().toISOString(),
-    discountAmount: 4.90
+    discountAmount: 1.99
   }));
 };
 
@@ -32,7 +32,7 @@ export const getDiscount = (): number => {
     const stored = localStorage.getItem(AGE_VERIFIED_KEY);
     if (!stored) return 0;
     const parsed = JSON.parse(stored);
-    return parsed?.verified ? parsed.discountAmount || 4.90 : 0;
+    return parsed?.verified ? parsed.discountAmount || 1.99 : 0;
   } catch { return 0; }
 };
 
@@ -44,7 +44,7 @@ const AgeVerificationModal: React.FC<AgeVerificationModalProps> = ({ isOpen, onC
   const [pixData, setPixData] = useState<{ qrcode: string; copiaCola: string; id: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [copied, setCopied] = useState(false);
-  const price = 4.90;
+  const price = 1.99;
 
   useEffect(() => {
     if (isOpen) { setStep('intro'); setPixData(null); setTimeLeft(600); setErrorMsg(''); setCopied(false); }

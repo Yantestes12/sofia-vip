@@ -159,7 +159,7 @@ const GroupOfferModal: React.FC<{ isOpen: boolean; onClose: () => void; cityName
           <div className="bg-zinc-950 rounded-xl p-4 border border-zinc-800">
             <div className="flex items-center justify-center gap-3">
               <span className="text-zinc-500 line-through text-sm">R$ 39,90</span>
-              <span className="text-emerald-400 font-black text-3xl">R$ 14,90</span>
+              <span className="text-emerald-400 font-black text-3xl">R$ 14,49</span>
             </div>
             <p className="text-zinc-500 text-[10px] mt-1 font-bold uppercase">Acesso vitalício • Pagamento único</p>
           </div>
@@ -170,13 +170,13 @@ const GroupOfferModal: React.FC<{ isOpen: boolean; onClose: () => void; cityName
               onClick={() => { window.open('https://t.me/+exemplo', '_blank'); onClose(); }}
               className="w-full py-4 bg-[#0088cc] hover:bg-[#0077b5] text-white font-black uppercase rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-lg"
             >
-              ✈️ ENTRAR VIA TELEGRAM — R$ 14,90
+              ✈️ ENTRAR VIA TELEGRAM — R$ 14,49
             </button>
             <button 
               onClick={() => { window.open('https://wa.me/5500000000000', '_blank'); onClose(); }}
               className="w-full py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white font-black uppercase rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm shadow-lg"
             >
-              💬 ENTRAR VIA WHATSAPP — R$ 14,90
+              💬 ENTRAR VIA WHATSAPP — R$ 14,49
             </button>
           </div>
 

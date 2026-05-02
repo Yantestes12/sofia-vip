@@ -3,86 +3,69 @@ import React, { useState } from 'react';
 import { Lock, Heart, ImageIcon, X, Gem } from './Icons';
 
 interface PhotoGridProps {
-  onOpenSubscription: () => void;
   isVip: boolean;
+  onUnlock: () => void;
 }
 
-interface PhotoItem {
-  id: number;
-  url: string;
-  isLocked: boolean;
-  likes: number;
-  caption: string;
-}
+const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, onUnlock }) => {
+  const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
-const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
-  const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
-
-  const photos = Array.from({ length: 30 }).map((_, i) => ({
+  // 30 photos from Sofia + 30 from Camila
+  const sofiaPhotos = Array.from({ length: 30 }, (_, i) => ({
     id: i,
     url: `https://secreto.meuprivacy.digital/nataliexking/foto${i + 1}.webp`,
-    // Exatamente 50% bloqueado (índices pares)
-    isLocked: i % 2 === 0,
-    likes: Math.floor(Math.random() * 8000) + 1000,
-    caption: `Set Sofia Oliveira #${i + 1}`
+    isLocked: i >= 8, // first 8 free, rest locked
+    creator: 'sofia' as const,
   }));
 
-  const handlePhotoClick = (photo: PhotoItem) => {
+  const camilaPhotos = Array.from({ length: 30 }, (_, i) => ({
+    id: 100 + i,
+    url: `https://secreto.meuprivacy.digital/acesso/foto${i + 1}.jpg`,
+    isLocked: i >= 5, // first 5 free, rest locked
+    creator: 'camila' as const,
+  }));
+
+  const allPhotos = [...sofiaPhotos, ...camilaPhotos];
+
+  const handleClick = (photo: typeof allPhotos[0]) => {
     const locked = photo.isLocked && !isVip;
     if (locked) {
-      onOpenSubscription();
+      onUnlock();
     } else {
-      setSelectedPhoto(photo);
+      setSelectedPhoto(photo.id);
     }
   };
 
+  const selected = allPhotos.find(p => p.id === selectedPhoto);
+
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Sofia section */}
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 rounded-2xl border border-zinc-800 shadow-lg">
         <h3 className="text-white text-lg font-black uppercase tracking-tighter flex items-center gap-2">
-          <ImageIcon className="w-5 h-5 text-amber-400" /> Galeria Privada
+          <ImageIcon className="w-5 h-5 text-amber-400" /> Sofia Oliveira
         </h3>
         <span className="bg-amber-500/10 text-amber-400 text-xs font-black px-4 py-1.5 rounded-full border border-amber-500/20">
-          30 MÍDIAS
+          30 FOTOS
         </span>
       </div>
 
       <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-        {photos.map((photo, i) => {
+        {sofiaPhotos.map((photo) => {
           const locked = photo.isLocked && !isVip;
-          // Blur progressivo: primeiras bloqueadas = leve, últimas = pesado
-          const lockedBefore = photos.slice(0, i).filter(p => p.isLocked && !isVip).length;
-          const blurPx = locked ? Math.min(4 + lockedBefore * 1.5, 20) : 0;
           return (
-            <div 
-              key={photo.id} 
-              className="relative aspect-[3/4] group overflow-hidden bg-zinc-900 rounded-xl cursor-pointer border border-zinc-800/50 hover:border-pink-400/50 transition-all shadow-md"
-              onClick={() => handlePhotoClick(photo)}
-            >
-              {/* Overlay de Proteção Transparente */}
+            <div key={photo.id} className="relative aspect-[3/4] group overflow-hidden bg-zinc-900 rounded-xl cursor-pointer border border-zinc-800/50 hover:border-pink-400/50 transition-all shadow-md"
+              onClick={() => handleClick(photo)}>
               <div className="absolute inset-0 z-20 bg-transparent"></div>
-              
-              <img 
-                src={photo.url} 
-                alt="Foto" 
-                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${locked ? 'scale-105' : 'opacity-90 group-hover:opacity-100'}`}
-                style={locked ? { filter: `blur(${blurPx}px)`, opacity: 0.7 } : {}}
-                loading="lazy"
-              />
-              {locked ? (
+              <img src={photo.url} alt="" loading="lazy"
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${locked ? '' : 'opacity-90 group-hover:opacity-100'}`}
+                style={locked ? { filter: 'blur(12px)', opacity: 0.5 } : {}} />
+              {locked && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
-                  <Lock className="w-5 h-5 text-pink-400 mb-1 drop-shadow-lg" />
-                  {blurPx >= 10 && (
-                    <span className="bg-pink-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">R$ 9,90</span>
-                  )}
-                </div>
-              ) : (
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-2 z-10">
-                    <div className="flex items-center gap-1 text-white">
-                        <Heart className="w-3 h-3 fill-white" />
-                        <span className="text-[10px] font-bold">{photo.likes}</span>
-                        {photo.isLocked && isVip && <Gem size={10} className="text-amber-400 ml-1" />}
-                    </div>
+                  <Lock className="w-5 h-5 text-blue-400 mb-1 drop-shadow-lg" />
+                  <span className="bg-blue-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">
+                    🔐 VERIFICAR IDADE
+                  </span>
                 </div>
               )}
             </div>
@@ -90,21 +73,47 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ onOpenSubscription, isVip }) => {
         })}
       </div>
 
-      {selectedPhoto && (
-        <div 
-            className="fixed inset-0 w-screen h-screen z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm"
-            onClick={() => setSelectedPhoto(null)}
-        >
+      {/* Camila section */}
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 rounded-2xl border border-zinc-800 shadow-lg mt-8">
+        <h3 className="text-white text-lg font-black uppercase tracking-tighter flex items-center gap-2">
+          <ImageIcon className="w-5 h-5 text-pink-400" /> 👯‍♀️ Camila Elle
+        </h3>
+        <span className="bg-pink-500/10 text-pink-400 text-xs font-black px-4 py-1.5 rounded-full border border-pink-500/20">
+          30 FOTOS
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+        {camilaPhotos.map((photo) => {
+          const locked = photo.isLocked && !isVip;
+          return (
+            <div key={photo.id} className="relative aspect-[3/4] group overflow-hidden bg-zinc-900 rounded-xl cursor-pointer border border-zinc-800/50 hover:border-pink-400/50 transition-all shadow-md"
+              onClick={() => handleClick(photo)}>
+              <div className="absolute inset-0 z-20 bg-transparent"></div>
+              <img src={photo.url} alt="" loading="lazy"
+                className={`w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 ${locked ? '' : 'opacity-90 group-hover:opacity-100'}`}
+                style={locked ? { filter: 'blur(12px)', opacity: 0.5 } : {}} />
+              {locked && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
+                  <Lock className="w-5 h-5 text-blue-400 mb-1 drop-shadow-lg" />
+                  <span className="bg-blue-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">
+                    🔐 VERIFICAR IDADE
+                  </span>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Full view modal */}
+      {selected && (
+        <div className="fixed inset-0 w-screen h-screen z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm"
+          onClick={() => setSelectedPhoto(null)}>
           <button className="absolute top-6 right-6 z-[110] text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors"><X size={24}/></button>
           <div className="relative max-h-screen max-w-5xl" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-             {/* Overlay de Proteção no Modal */}
-             <div className="absolute inset-0 z-10 bg-transparent"></div>
-             
-             <img src={selectedPhoto.url} className="max-h-[90vh] max-w-full object-contain rounded-2xl shadow-2xl border border-zinc-800" alt="Full view" />
-             
-             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 px-6 py-2 rounded-full backdrop-blur-md border border-white/10 z-20">
-                <p className="text-white text-sm font-bold">{selectedPhoto.caption}</p>
-             </div>
+            <div className="absolute inset-0 z-10 bg-transparent"></div>
+            <img src={selected.url} className="max-h-[90vh] max-w-full object-contain rounded-2xl shadow-2xl border border-zinc-800" alt="" />
           </div>
         </div>
       )}
