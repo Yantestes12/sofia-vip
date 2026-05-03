@@ -50,7 +50,7 @@ const VideoPreview: React.FC<{
 };
 
 // ====== VAZADOS INLINE CARD ======
-const VazadosCard: React.FC<{ onOpen: () => void; onOpenVip: () => void; vipPrice: string }> = ({ onOpen, onOpenVip, vipPrice }) => {
+const VazadosCard: React.FC<{ onOpen: () => void; onOpenVip: () => void; vipPrice: string; isFreePeriod?: boolean }> = ({ onOpen, onOpenVip, vipPrice, isFreePeriod }) => {
   const [viewerCount] = useState(() => Math.floor(Math.random() * 300 + 500));
   return (
     <div className="relative bg-zinc-950 border-2 border-red-600 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(220,38,38,0.4)] animate-fade-in-up">
@@ -70,14 +70,23 @@ const VazadosCard: React.FC<{ onOpen: () => void; onOpenVip: () => void; vipPric
         </div>
         <h3 className="text-white font-black text-2xl uppercase italic tracking-tighter leading-[0.9] pt-2">CONTEÚDO <span className="text-red-500">VAZADO</span></h3>
         <p className="text-zinc-400 text-sm font-medium leading-snug">Os vídeos mais proibidos do submundo acabaram de ser liberados...</p>
-        <button onClick={onOpen}
-          className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase text-sm py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)] active:scale-[0.97] flex items-center justify-center gap-3">
-          <ShieldAlert size={18} /> VER CONTEÚDOS VAZADOS
-        </button>
-        <button onClick={onOpenVip}
-          className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-[0.97] flex items-center justify-center gap-2">
-          <Gem size={16} className="fill-white" /> DESBLOQUEAR SEGREDINHO — {vipPrice}
-        </button>
+        {isFreePeriod ? (
+          <a href="https://wa.me/" target="_blank" rel="noopener"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-black uppercase text-sm py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(34,197,94,0.3)] active:scale-[0.97] flex items-center justify-center gap-3">
+            💬 COMPRAR CONTEÚDOS NO WHATSAPP
+          </a>
+        ) : (
+          <>
+            <button onClick={onOpen}
+              className="w-full bg-red-600 hover:bg-red-500 text-white font-black uppercase text-sm py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(220,38,38,0.3)] active:scale-[0.97] flex items-center justify-center gap-3">
+              <ShieldAlert size={18} /> VER CONTEÚDOS VAZADOS
+            </button>
+            <button onClick={onOpenVip}
+              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(236,72,153,0.3)] active:scale-[0.97] flex items-center justify-center gap-2">
+              <Gem size={16} className="fill-white" /> DESBLOQUEAR SEGREDINHO — {vipPrice}
+            </button>
+          </>
+        )}
         <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest">⚡ {viewerCount} pessoas acessando agora</p>
       </div>
     </div>
@@ -228,7 +237,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     <div className="max-w-2xl mx-auto space-y-8 pb-12">
       {feedItems.map((item, idx) => {
         if (item.type === 'vazados') {
-          return <VazadosCard key="vazados" onOpen={onOpenVazados} onOpenVip={isAgeVerified ? onOpenSubscription : onRequestAgeVerification} vipPrice={lockMessage || `DESBLOQUEAR — ${vipPrice}`} />;
+          return <VazadosCard key="vazados" onOpen={onOpenVazados} onOpenVip={onOpenSubscription} vipPrice={`DESBLOQUEAR — ${vipPrice}`} isFreePeriod={!isAgeVerified} />;
         }
 
         if (item.type === 'separator') {
@@ -388,21 +397,34 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="text-center">
               <Lock className="w-10 h-10 text-white mx-auto mb-3 drop-shadow-lg" />
-              <p className="text-white font-black text-lg uppercase tracking-tight mb-3">
-                {!isAgeVerified ? '🔐 Verifique sua idade' : '😈 Conteúdo VIP'}
-              </p>
-              <button
-                onClick={!isAgeVerified ? onRequestAgeVerification : onOpenSubscription}
-                className={`${!isAgeVerified ? 'bg-gradient-to-r from-blue-500 to-blue-600' : 'bg-gradient-to-r from-pink-500 to-rose-500'} text-white py-3 px-8 rounded-xl font-black uppercase text-sm shadow-lg active:scale-[0.97] transition-transform`}
-              >
-                {!isAgeVerified ? '🔐 VERIFICAR IDADE' : lockMessage || `ASSISTIR AO VIVO — ${vipPrice}`}
-              </button>
+              {!isAgeVerified ? (
+                <>
+                  <p className="text-white font-black text-lg uppercase tracking-tight mb-3">
+                    🔴 Sofia está ao vivo
+                  </p>
+                  <a href="https://wa.me/" target="_blank" rel="noopener"
+                    className="bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-8 rounded-xl font-black uppercase text-sm shadow-lg active:scale-[0.97] transition-transform inline-flex items-center gap-2">
+                    💬 COMPRAR NO WHATSAPP
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="text-white font-black text-lg uppercase tracking-tight mb-3">
+                    😈 Conteúdo VIP
+                  </p>
+                  <button
+                    onClick={onOpenSubscription}
+                    className="bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 px-8 rounded-xl font-black uppercase text-sm shadow-lg active:scale-[0.97] transition-transform">
+                    ASSISTIR AO VIVO — {vipPrice}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
         <div className="p-4">
           <p className="text-white font-bold">Sofia Oliveira está ao vivo agora 🔴</p>
-          <p className="text-zinc-500 text-xs mt-1">Conteúdo exclusivo em tempo real • Acesso VIP vitalício</p>
+          <p className="text-zinc-500 text-xs mt-1">Conteúdo exclusivo em tempo real</p>
         </div>
       </div>
     </div>

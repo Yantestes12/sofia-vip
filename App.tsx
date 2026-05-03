@@ -717,13 +717,14 @@ const App: React.FC = () => {
       <ProfileHeader 
         profile={profileData} 
         isVip={isVip}
+        isFreePeriod={isFreePeriod}
         onPurchase={() => setShowPaymentModal(true)}
       />
 
-      {/* Ao Vivo - Top Banner */}
+      {/* Ao Vivo - Top Banner (VIP overlay only after free period) */}
       <div className="container mx-auto px-4 pt-4">
         <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl cursor-pointer"
-          onClick={() => setShowPaymentModal(true)}>
+          onClick={() => !isFreePeriod && setShowPaymentModal(true)}>
           <div className="relative h-32 w-full overflow-hidden">
             <video src="https://secreto.meuprivacy.digital/nataliexking/video10.mp4"
               autoPlay muted loop playsInline
@@ -738,12 +739,25 @@ const App: React.FC = () => {
             </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
-                <p className="text-white font-black text-sm uppercase tracking-tight mb-2">
-                  😈 Conteúdo VIP — Acesso Vitalício
-                </p>
-                <div className="bg-pink-500/80 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block">
-                  ASSISTIR — {vipDisplayPrice}
-                </div>
+                {isFreePeriod ? (
+                  <>
+                    <p className="text-white font-black text-sm uppercase tracking-tight mb-2">
+                      🔴 Sofia está ao vivo agora
+                    </p>
+                    <div className="bg-green-500/80 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block">
+                      💬 COMPRE NO WHATSAPP
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white font-black text-sm uppercase tracking-tight mb-2">
+                      😈 Conteúdo VIP — Acesso Vitalício
+                    </p>
+                    <div className="bg-pink-500/80 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block">
+                      ASSISTIR — {vipDisplayPrice}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -785,7 +799,7 @@ const App: React.FC = () => {
           <VideoGallery isVip={isVip} onUnlock={() => setShowPaymentModal(true)} />
         )}
         {activeTab === 'live' && (
-          <LiveSection isVip={isVip} onUnlock={() => setShowPaymentModal(true)} />
+          <LiveSection isVip={isVip} isFreePeriod={isFreePeriod} onUnlock={() => setShowPaymentModal(true)} />
         )}
         {activeTab === 'vazados' && (
           isFreePeriod ? (
@@ -794,10 +808,10 @@ const App: React.FC = () => {
                 <span className="text-4xl">⚠️</span>
               </div>
               <h3 className="text-white font-black text-xl uppercase mb-3">Conteúdos Vazados</h3>
-              <p className="text-zinc-400 text-sm mb-6 max-w-xs mx-auto">Esses conteúdos são muito pesados... me manda mensagem no WhatsApp que eu libero pra você 💋</p>
+              <p className="text-zinc-400 text-sm mb-6 max-w-xs mx-auto">Esses conteúdos são muito pesados... me chama no WhatsApp que eu libero pra você 🔥</p>
               <a href="https://wa.me/" target="_blank" rel="noopener"
-                className="inline-block bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 px-8 rounded-xl font-black uppercase text-sm shadow-lg">
-                💬 FALAR NO WHATSAPP
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-green-600 text-white py-3.5 px-8 rounded-xl font-black uppercase text-sm shadow-lg active:scale-[0.97] transition-transform">
+                💬 COMPRAR NO WHATSAPP
               </a>
             </div>
           ) : (
@@ -806,27 +820,20 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <LeakAdCard onClick={() => setShowLeakPortal(true)} onVipClick={() => setShowPaymentModal(true)} />
+      {!isFreePeriod && <LeakAdCard onClick={() => setShowLeakPortal(true)} onVipClick={() => setShowPaymentModal(true)} />}
 
-      {!isVip && <SocialProofToast cityName={cityName} />}
+      {!isVip && !isFreePeriod && <SocialProofToast cityName={cityName} />}
 
-      <GroupOfferModal isOpen={showGroupOffer} onClose={() => setShowGroupOffer(false)} cityName={cityName} />
+      {!isFreePeriod && <GroupOfferModal isOpen={showGroupOffer} onClose={() => setShowGroupOffer(false)} cityName={cityName} />}
 
-      {/* Sticky CTA Bar */}
-      {!isVip && !showPaymentModal && (
+      {/* Sticky CTA Bar - ONLY after free period */}
+      {!isVip && !isFreePeriod && !showPaymentModal && (
         <div className="fixed bottom-0 left-0 right-0 z-[60] bg-zinc-950/95 border-t border-zinc-800 backdrop-blur-md px-4 py-3 animate-fade-in">
-          {isFreePeriod ? (
-            <a href="https://wa.me/" target="_blank" rel="noopener"
-              className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(34,197,94,0.3)] flex items-center justify-center gap-2 block text-center">
-              💬 Compre meus conteúdos no WhatsApp 💕
-            </a>
-          ) : (
-            <button 
-              onClick={() => setShowPaymentModal(true)}
-              className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2">
-              🔥 DESBLOQUEAR VIP VITALÍCIO — {vipDisplayPrice}
-            </button>
-          )}
+          <button 
+            onClick={() => setShowPaymentModal(true)}
+            className="w-full max-w-lg mx-auto py-3.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_25px_rgba(236,72,153,0.3)] transition-all active:scale-[0.97] flex items-center justify-center gap-2">
+            🔥 DESBLOQUEAR VIP VITALÍCIO — {vipDisplayPrice}
+          </button>
         </div>
       )}
 

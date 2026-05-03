@@ -41,9 +41,12 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
   const videoRef = useRef<HTMLVideoElement>(null);
   const storyStartTime = useRef<number>(0);
 
+  // During free period (isAgeVerified=false): hide Segredinho, show only free stories
+  // After free period: show Segredinho locked
   const stories: StoryItem[] = [
     { id: 1, label: "Hoje 💕", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", isVideo: false, isLocked: false },
-    { id: 2, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", isVideo: false, isLocked: true },
+    // Segredinho only visible after free period
+    ...(isAgeVerified ? [{ id: 2, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", isVideo: false, isLocked: true }] : []),
     { id: 99, label: "VAZADOS", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto20.webp", mediaUrl: "", isVideo: false, isLocked: false, isVazado: true, title: "⚠️ VAZADOS" },
   ];
 
@@ -63,7 +66,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
       return;
     }
     if (story.isLocked && !isVip) {
-      if (!isAgeVerified) { onRequestAgeVerification(); return; }
+      // After free period: open VIP payment
       onOpenSubscription();
       return;
     }
@@ -74,7 +77,8 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
     storyStartTime.current = Date.now();
   };
 
-  // 10s blur trigger for vazados (or 30s for normal stories)
+  // Blur trigger: during free period vazados blur after 10s, normal stories after 30s
+  // After free period (isAgeVerified=true): no blur at all
   useEffect(() => {
     if (!activeStory || isAgeVerified) return;
     const delay = showingVazados ? 10000 : 30000;
@@ -251,32 +255,29 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none"></div>
 
-          {/* Blur overlay with age verification CTA */}
+          {/* Blur overlay - during free period: 'compre no WhatsApp' */}
           {showBlurOverlay && !isAgeVerified && (
             <div className="absolute inset-0 z-[45] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
-              <div className="bg-zinc-900/95 border border-blue-500/30 rounded-2xl p-6 mx-4 max-w-sm text-center shadow-2xl">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center border-2 border-blue-500/30">
-                  <ShieldAlert className="w-8 h-8 text-blue-400" />
+              <div className="bg-zinc-900/95 border border-zinc-700 rounded-2xl p-6 mx-4 max-w-sm text-center shadow-2xl">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-600">
+                  <Lock className="w-8 h-8 text-zinc-400" />
                 </div>
-                <h3 className="text-white font-black text-lg uppercase mb-2">Verificação Necessária</h3>
+                <h3 className="text-white font-black text-lg uppercase mb-2">Conteúdo Bloqueado</h3>
                 <p className="text-zinc-400 text-sm mb-4">
                   {showingVazados
-                    ? 'Para continuar assistindo os vazados, confirme que você é maior de idade.'
-                    : 'Para ver mais conteúdos, precisamos confirmar sua idade.'}
+                    ? 'Quer ver os vazados completos? Me chama no WhatsApp que eu libero pra você 🔥'
+                    : 'Quer ver mais? Me chama no WhatsApp que eu te mostro tudo 💕'}
                 </p>
-                <button onClick={(e) => { e.stopPropagation(); closeStory(); onRequestAgeVerification(); }}
-                  className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black uppercase text-sm rounded-xl shadow-lg active:scale-[0.97] transition-transform z-50 relative">
-                  🔐 VERIFICAR MINHA IDADE
+                <a href="https://wa.me/" target="_blank" rel="noopener"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full py-3.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-black uppercase text-sm rounded-xl shadow-lg active:scale-[0.97] transition-transform z-50 relative flex items-center justify-center gap-2">
+                  💬 COMPRAR NO WHATSAPP
+                </a>
+                <button onClick={(e) => { e.stopPropagation(); closeStory(); }}
+                  className="w-full py-2.5 text-zinc-500 text-xs font-bold uppercase mt-2 hover:text-zinc-300 transition-colors z-50 relative">
+                  FECHAR
                 </button>
-                <p className="text-zinc-500 text-[10px] mt-3 font-bold">Valor devolvido em desconto nos conteúdos</p>
               </div>
-            </div>
-          )}
-
-          {/* Age verification hint at bottom (before blur) */}
-          {!isAgeVerified && !showBlurOverlay && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 bg-blue-500/20 border border-blue-500/40 px-4 py-2 rounded-full flex items-center gap-2 backdrop-blur-md">
-              <span className="text-blue-400 text-xs font-black uppercase">🔐 Verificação de idade necessária</span>
             </div>
           )}
         </div>

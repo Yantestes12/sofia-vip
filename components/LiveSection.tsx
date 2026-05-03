@@ -4,10 +4,11 @@ import { Lock, Gem, Radio } from './Icons';
 
 interface LiveSectionProps {
   isVip: boolean;
-  onOpenSubscription: () => void;
+  isFreePeriod?: boolean;
+  onUnlock: () => void;
 }
 
-const LiveSection: React.FC<LiveSectionProps> = ({ isVip, onOpenSubscription }) => {
+const LiveSection: React.FC<LiveSectionProps> = ({ isVip, isFreePeriod, onUnlock }) => {
   const [messages, setMessages] = useState([
     { user: 'Master_SP', text: 'Você é perfeita Sofia! 🔥', color: 'text-blue-400' },
     { user: 'LoverBoy', text: 'Que delícia de lingerie...', color: 'text-pink-400' },
@@ -101,13 +102,24 @@ const LiveSection: React.FC<LiveSectionProps> = ({ isVip, onOpenSubscription }) 
               </div>
             </div>
 
-            <button 
-              onClick={onOpenSubscription}
-              className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white py-4 rounded-xl font-black uppercase text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(236,72,153,0.3)] flex justify-center items-center gap-3"
-            >
-              <Gem size={18} className="fill-white" />
-              DESBLOQUEAR — R$ 16,90
-            </button>
+            {isFreePeriod ? (
+              <a 
+                href="https://wa.me/"
+                target="_blank"
+                rel="noopener"
+                className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white py-4 rounded-xl font-black uppercase text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(34,197,94,0.3)] flex justify-center items-center gap-3"
+              >
+                💬 COMPRAR CONTEÚDOS NO WHATSAPP
+              </a>
+            ) : (
+              <button 
+                onClick={onUnlock}
+                className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white py-4 rounded-xl font-black uppercase text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(236,72,153,0.3)] flex justify-center items-center gap-3"
+              >
+                <Gem size={18} className="fill-white" />
+                DESBLOQUEAR — R$ 16,90
+              </button>
+            )}
             
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-3">
               ✨ Acesso imediato • Lives + Fotos + Vídeos
