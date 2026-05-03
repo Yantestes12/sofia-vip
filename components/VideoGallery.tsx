@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Play, Lock, Video as VideoIcon, X, Gem } from './Icons';
 
 interface VideoGalleryProps {
@@ -8,112 +8,285 @@ interface VideoGalleryProps {
   onUnlock: () => void;
 }
 
-// Stable durations per video (seeded, not random on each render)
-const SOFIA_DURATIONS = [
-  '3:42', '5:18', '2:56', '4:31', '6:12', '3:07', '7:45', '4:23',
-  '5:51', '2:33', '6:08', '3:49', '4:17', '5:02', '3:28', '7:11'
-];
-const CAMILA_DURATIONS = [
-  '4:15', '3:38', '5:44', '2:49', '6:21', '3:55', '4:08', '5:32',
-  '3:12', '6:47', '4:39', '2:58', '5:16', '3:43', '7:02'
-];
-const SOFIA_VIEWS = [
-  '142k', '89k', '231k', '67k', '178k', '54k', '312k', '95k',
-  '203k', '41k', '156k', '73k', '118k', '86k', '49k', '267k'
-];
-const CAMILA_VIEWS = [
-  '98k', '62k', '145k', '38k', '112k', '71k', '89k', '134k',
-  '53k', '167k', '44k', '78k', '103k', '56k', '189k'
-];
+interface VideoMeta {
+  id: number;
+  title: string;
+  url: string;
+  duration: number; // seconds — real from metadata
+  durationLabel: string;
+  views: string;
+  locked: boolean;
+  creator: 'sofia' | 'camila';
+  ready: boolean; // frame loaded & video exists
+  failed: boolean;
+  thumbCanvas: string | null; // data URL from canvas capture
+}
 
-// Lazy video thumbnail — only loads video when scrolled into view
-const LazyVideoThumb: React.FC<{ src: string; locked: boolean }> = ({ src, locked }) => {
-  const ref = useRef<HTMLVideoElement>(null);
+// ============================================================
+// LAZY THUMB — captures real frame from video, shows skeleton
+// Uses canvas capture for crisp thumbnail + quality enhancement
+// ============================================================
+const LazyThumb: React.FC<{
+  video: VideoMeta;
+  onMeta: (id: number, dur: number, thumbUrl: string) => void;
+  onFail: (id: number) => void;
+  locked: boolean;
+}> = ({ video, onMeta, onFail, locked }) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = useState(false);
-  const [hasFrame, setHasFrame] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [thumb, setThumb] = useState<string | null>(video.thumbCanvas);
 
+  // Lazy: only start loading when scrolled near
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
-      { rootMargin: '200px' }
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { rootMargin: '300px' }
     );
-    observer.observe(el);
-    return () => observer.disconnect();
+    obs.observe(el);
+    return () => obs.disconnect();
   }, []);
 
+  // Load video metadata + capture frame via canvas
   useEffect(() => {
-    if (!isVisible || !ref.current) return;
-    const vid = ref.current;
-    const onLoaded = () => setHasFrame(true);
-    vid.addEventListener('loadeddata', onLoaded);
-    return () => vid.removeEventListener('loadeddata', onLoaded);
-  }, [isVisible]);
+    if (!visible || thumb) return;
+    const vid = document.createElement('video');
+    vid.crossOrigin = 'anonymous';
+    vid.preload = 'metadata';
+    vid.muted = true;
+    vid.playsInline = true;
+    vid.src = video.url + '#t=2';
+
+    const handleError = () => onFail(video.id);
+
+    const handleMeta = () => {
+      // Seek to 2s for a good frame
+      vid.currentTime = Math.min(2, vid.duration * 0.15);
+    };
+
+    const handleSeeked = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        // Render at higher res then display smaller = supersampling for quality
+        canvas.width = vid.videoWidth || 640;
+        canvas.height = vid.videoHeight || 360;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/webp', 0.85);
+          setThumb(dataUrl);
+          onMeta(video.id, vid.duration, dataUrl);
+        }
+      } catch {
+        // CORS or other error — use video element as fallback
+        onMeta(video.id, vid.duration, '');
+      }
+      vid.remove();
+    };
+
+    vid.addEventListener('loadedmetadata', handleMeta);
+    vid.addEventListener('seeked', handleSeeked);
+    vid.addEventListener('error', handleError);
+    vid.load();
+
+    return () => {
+      vid.removeEventListener('loadedmetadata', handleMeta);
+      vid.removeEventListener('seeked', handleSeeked);
+      vid.removeEventListener('error', handleError);
+      vid.pause();
+      vid.src = '';
+    };
+  }, [visible, thumb, video.url, video.id]);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 bg-zinc-950">
-      {isVisible && (
+    <div ref={containerRef} className="absolute inset-0 bg-zinc-950 overflow-hidden">
+      {thumb ? (
+        <img
+          src={thumb}
+          alt=""
+          className={`w-full h-full object-cover transition-all duration-500 ${
+            locked ? 'blur-[14px] scale-110 opacity-40' : 'opacity-100'
+          }`}
+          // CSS quality enhancement for compressed video thumbs
+          style={{
+            imageRendering: 'auto',
+            filter: locked
+              ? 'blur(14px) brightness(0.6)'
+              : 'contrast(1.08) saturate(1.12) brightness(1.02)',
+          }}
+          draggable={false}
+        />
+      ) : visible ? (
+        // Fallback: use video element directly while canvas captures
         <video
-          ref={ref}
-          src={`${src}#t=1.5`}
+          ref={videoRef}
+          src={`${video.url}#t=2`}
           muted
           playsInline
           preload="metadata"
-          className={`w-full h-full object-cover transition-all duration-500 ${
-            hasFrame ? 'opacity-100' : 'opacity-0'
-          } ${locked ? 'blur-[12px] scale-105' : ''}`}
+          className={`w-full h-full object-cover transition-opacity duration-500 opacity-0 ${
+            locked ? 'blur-[14px] scale-110' : ''
+          }`}
           style={locked ? { opacity: 0.4 } : {}}
+          onLoadedData={(e) => {
+            (e.target as HTMLVideoElement).style.opacity = '1';
+          }}
         />
-      )}
-      {/* Loading skeleton while frame loads */}
-      {!hasFrame && (
-        <div className="absolute inset-0 bg-zinc-900 animate-pulse flex items-center justify-center">
-          <VideoIcon className="w-8 h-8 text-zinc-700" />
+      ) : null}
+
+      {/* Skeleton while loading */}
+      {!thumb && (
+        <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2 animate-pulse">
+            <VideoIcon className="w-6 h-6 text-zinc-700" />
+            <div className="w-16 h-1 bg-zinc-800 rounded-full" />
+          </div>
         </div>
       )}
     </div>
   );
 };
 
+// ============================================================
+// VIDEO PLAYER MODAL — quality-enhanced playback
+// ============================================================
+const VideoPlayer: React.FC<{
+  video: VideoMeta;
+  onClose: () => void;
+}> = ({ video, onClose }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div
+      className="fixed inset-0 w-screen h-screen z-[100] bg-black flex items-center justify-center animate-fade-in"
+      onClick={onClose}
+    >
+      <button className="absolute top-4 right-4 z-50 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors backdrop-blur-sm border border-white/10">
+        <X size={24} />
+      </button>
+
+      <div
+        className="w-full h-full max-w-6xl max-h-[90vh] relative flex items-center justify-center mx-4"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Loading spinner */}
+        {!loaded && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+            <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-4" />
+            <p className="text-zinc-400 text-sm font-bold animate-pulse">Carregando vídeo...</p>
+          </div>
+        )}
+
+        <video
+          ref={videoRef}
+          src={video.url}
+          controls
+          autoPlay
+          playsInline
+          controlsList="nodownload"
+          className={`w-full h-full object-contain transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
+          // Quality enhancement CSS for compressed videos
+          style={{
+            filter: 'contrast(1.06) saturate(1.08)',
+            imageRendering: 'auto',
+          }}
+          onCanPlay={() => setLoaded(true)}
+        />
+
+        {/* Title overlay */}
+        <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 max-w-[70%]">
+          <p className="text-white text-sm font-bold truncate">{video.title}</p>
+          <p className="text-zinc-400 text-[10px] font-medium">{video.durationLabel}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ============================================================
+// MAIN GALLERY
+// ============================================================
+const formatDuration = (secs: number): string => {
+  if (!secs || isNaN(secs)) return '--:--';
+  const m = Math.floor(secs / 60);
+  const s = Math.floor(secs % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
+// Stable view counts (seeded per index, not random each render)
+const VIEWS = [
+  '142k','89k','231k','67k','178k','54k','312k','95k',
+  '203k','41k','156k','73k','118k','86k','49k','267k',
+  '98k','62k','145k','38k','112k','71k','89k','134k',
+  '53k','167k','44k','78k','103k','56k','189k','72k',
+];
+
+const videoTitles = [
+  "Gemendo alto no chuveiro 🚿", "Teste de flexibilidade na cama 🤸‍♀️", "POV: Sou sua vizinha safada 🚪",
+  "Gozei muito rápido nesse... 🤫", "Brincadeirinha com o brinquedo novo 🎥", "Aulas de sexo prático 🔞",
+  "O que eu faço quando estou carente... 😈", "Masturbação intensa no sofá 🛋️", "Ficando toda molhadinha pra você 💦",
+  "Sentando com força total (POV) 🍑", "Experiência 4K: Minha primeira vez por trás 🎬", "Preview: Safadeza na sala 🔞",
+  "Garganta profunda sem limites 🍌", "Brincando com o gelo no mamilo 🧊", "Striptease lento só pra você 👗",
+  "Lingerie transparente e muito tesão ❤️",
+];
+
 const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlock }) => {
   const [selectedVideo, setSelectedVideo] = useState<number | null>(null);
+  const [videos, setVideos] = useState<VideoMeta[]>([]);
+  const [initialized, setInitialized] = useState(false);
 
-  const videoTitles = [
-    "Gemendo alto no chuveiro 🚿", "Teste de flexibilidade na cama 🤸‍♀️", "POV: Sou sua vizinha safada 🚪",
-    "Gozei muito rápido nesse... 🤫", "Brincadeirinha com o brinquedo novo 🎥", "Aulas de sexo prático 🔞",
-    "O que eu faço quando estou carente... 😈", "Masturbação intensa no sofá 🛋️", "Ficando toda molhadinha pra você 💦",
-    "Sentando com força total (POV) 🍑", "Experiência 4K: Minha primeira vez por trás 🎬", "Preview: Safadeza na sala 🔞",
-    "Garganta profunda sem limites 🍌", "Brincando com o gelo no mamilo 🧊", "Striptease lento só pra você 👗",
-    "Lingerie transparente e muito tesão ❤️",
-  ];
+  // Build initial video list
+  useEffect(() => {
+    const sofiaList: VideoMeta[] = Array.from({ length: 16 }, (_, i) => ({
+      id: i,
+      title: videoTitles[i % videoTitles.length],
+      url: `https://secreto.meuprivacy.digital/nataliexking/${i === 0 ? 'video' : `video${i}`}.mp4`,
+      duration: 0,
+      durationLabel: '--:--',
+      views: VIEWS[i],
+      locked: isFreePeriod ? (i >= 12) : (i >= 4),
+      creator: 'sofia' as const,
+      ready: false,
+      failed: false,
+      thumbCanvas: null,
+    }));
 
-  // Sofia videos (16) — stable thumbs & durations
-  const sofiaVideos = Array.from({ length: 16 }, (_, i) => ({
-    id: i,
-    title: videoTitles[i % videoTitles.length],
-    url: `https://secreto.meuprivacy.digital/nataliexking/${i === 0 ? 'video' : `video${i}`}.mp4`,
-    duration: SOFIA_DURATIONS[i],
-    views: SOFIA_VIEWS[i],
-    locked: isFreePeriod ? (i >= 12) : (i >= 4), // Free: 12 unlocked, After: 4 unlocked
-    creator: 'sofia' as const,
-  }));
+    const camilaList: VideoMeta[] = Array.from({ length: 15 }, (_, i) => ({
+      id: 100 + i,
+      title: `Camila Elle - Vídeo Exclusivo #${i + 1} 🔥`,
+      url: `https://secreto.meuprivacy.digital/acesso/video${i + 1}.mp4`,
+      duration: 0,
+      durationLabel: '--:--',
+      views: VIEWS[16 + i] || VIEWS[i],
+      locked: isFreePeriod ? (i >= 6) : (i >= 3),
+      creator: 'camila' as const,
+      ready: false,
+      failed: false,
+      thumbCanvas: null,
+    }));
 
-  // Camila videos (15) — stable thumbs & durations
-  const camilaVideos = Array.from({ length: 15 }, (_, i) => ({
-    id: 100 + i,
-    title: `Camila Elle - Vídeo Exclusivo #${i + 1} 🔥`,
-    url: `https://secreto.meuprivacy.digital/acesso/video${i + 1}.mp4`,
-    duration: CAMILA_DURATIONS[i],
-    views: CAMILA_VIEWS[i],
-    locked: isFreePeriod ? (i >= 6) : (i >= 3), // Free: 6 unlocked, After: 3 unlocked
-    creator: 'camila' as const,
-  }));
+    setVideos([...sofiaList, ...camilaList]);
+    setInitialized(true);
+  }, [isFreePeriod]);
 
-  const allVideos = [...sofiaVideos, ...camilaVideos];
+  // When metadata arrives from LazyThumb, update video info
+  const handleMeta = useCallback((id: number, dur: number, thumbUrl: string) => {
+    setVideos(prev => prev.map(v =>
+      v.id === id ? { ...v, duration: dur, durationLabel: formatDuration(dur), ready: true, thumbCanvas: thumbUrl || v.thumbCanvas } : v
+    ));
+  }, []);
 
-  const handleClick = (video: typeof allVideos[0]) => {
+  const handleFail = useCallback((id: number) => {
+    setVideos(prev => prev.map(v =>
+      v.id === id ? { ...v, failed: true } : v
+    ));
+  }, []);
+
+  const handleClick = (video: VideoMeta) => {
+    if (video.failed) return;
     if (video.locked && !isVip) {
       if (isFreePeriod) {
         window.open('https://wa.me/', '_blank');
@@ -125,57 +298,93 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
     }
   };
 
-  const selected = allVideos.find(v => v.id === selectedVideo);
+  // Sort: ready videos first sorted by duration (shortest→longest), then unready
+  const sortByDuration = (list: VideoMeta[]) => {
+    const working = list.filter(v => !v.failed);
+    const ready = working.filter(v => v.ready && v.duration > 0);
+    const notReady = working.filter(v => !v.ready || v.duration === 0);
+    ready.sort((a, b) => a.duration - b.duration);
+    return [...ready, ...notReady];
+  };
 
-  const renderVideoCard = (video: typeof allVideos[0]) => {
+  const sofiaVideos = sortByDuration(videos.filter(v => v.creator === 'sofia'));
+  const camilaVideos = sortByDuration(videos.filter(v => v.creator === 'camila'));
+
+  const selected = videos.find(v => v.id === selectedVideo);
+
+  // Count ready videos
+  const sofiaReady = sofiaVideos.filter(v => v.ready).length;
+  const camilaReady = camilaVideos.filter(v => v.ready).length;
+
+  const renderCard = (video: VideoMeta) => {
     const locked = video.locked && !isVip;
+    if (video.failed) return null; // Don't show broken videos
+
     return (
-      <div key={video.id}
-        className="bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 group hover:border-pink-400/50 transition-all cursor-pointer shadow-lg"
-        onClick={() => handleClick(video)}>
+      <div
+        key={video.id}
+        className={`bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-800 group hover:border-pink-400/50 transition-all cursor-pointer shadow-lg ${
+          !video.ready ? 'animate-pulse' : ''
+        }`}
+        onClick={() => handleClick(video)}
+      >
         <div className="relative aspect-video bg-zinc-950 flex items-center justify-center overflow-hidden">
-          <LazyVideoThumb src={video.url} locked={locked} />
-          
-          <div className="relative z-10 transition-transform group-hover:scale-110">
-            {locked ? (
-              <div className="flex flex-col items-center">
-                <div className={`w-14 h-14 ${isFreePeriod ? 'bg-green-500/20 border-green-500/30' : 'bg-pink-500/20 border-pink-500/30'} backdrop-blur-md rounded-full flex items-center justify-center border shadow-[0_0_20px_rgba(0,0,0,0.3)]`}>
-                  <Lock className={`w-7 h-7 ${isFreePeriod ? 'text-green-400' : 'text-pink-400'}`} />
+          <LazyThumb video={video} onMeta={handleMeta} onFail={handleFail} locked={locked} />
+
+          {/* Play / Lock overlay */}
+          {video.ready && (
+            <div className="relative z-10 transition-transform group-hover:scale-110">
+              {locked ? (
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 ${isFreePeriod ? 'bg-green-500/20 border-green-500/30' : 'bg-pink-500/20 border-pink-500/30'} backdrop-blur-md rounded-full flex items-center justify-center border shadow-lg`}>
+                    <Lock className={`w-6 h-6 ${isFreePeriod ? 'text-green-400' : 'text-pink-400'}`} />
+                  </div>
+                  <span className={`mt-2 ${isFreePeriod ? 'bg-green-500/90' : 'bg-pink-500/90'} text-white px-3 py-1 rounded-full font-black text-[8px] uppercase shadow-lg tracking-wide`}>
+                    {isFreePeriod ? '💬 COMPRE NO ZAP' : '😈 VIP — R$ 16,90'}
+                  </span>
                 </div>
-                <span className={`mt-2 ${isFreePeriod ? 'bg-green-500/90' : 'bg-pink-500/90'} text-white px-3 py-1 rounded-full font-black text-[9px] uppercase shadow-lg`}>
-                  {isFreePeriod ? '💬 COMPRE NO WHATSAPP' : '😈 DESBLOQUEAR VIP'}
-                </span>
-              </div>
-            ) : (
-              <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center pl-1 group-hover:bg-pink-500 transition-all border border-white/20 shadow-2xl">
-                <Play className="w-8 h-8 text-white fill-white" />
-              </div>
-            )}
-          </div>
+              ) : (
+                <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center pl-1 group-hover:bg-pink-500 transition-all border border-white/20 shadow-2xl">
+                  <Play className="w-8 h-8 text-white fill-white" />
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[10px] font-black text-white border border-white/10 z-10">
-            {video.duration}
-          </div>
+          {/* Duration badge — only show real duration */}
+          {video.ready && video.duration > 0 && (
+            <div className="absolute bottom-2.5 right-2.5 bg-black/80 backdrop-blur px-2 py-0.5 rounded text-[10px] font-black text-white z-10 tabular-nums">
+              {video.durationLabel}
+            </div>
+          )}
 
-          {locked && (
-            <div className="absolute bottom-3 left-3 bg-black/70 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-bold text-pink-400 border border-pink-500/20 z-10">
-              🔥 {video.views} views
+          {/* Views badge on locked */}
+          {locked && video.ready && (
+            <div className="absolute bottom-2.5 left-2.5 bg-black/80 backdrop-blur px-2 py-0.5 rounded text-[9px] font-bold text-pink-400 z-10">
+              🔥 {video.views}
             </div>
           )}
         </div>
-        <div className="p-4 bg-gradient-to-b from-zinc-900 to-zinc-950">
-          <h3 className="font-bold text-sm text-white mb-1 group-hover:text-pink-400 transition-colors line-clamp-1">
+
+        <div className="p-3.5 bg-gradient-to-b from-zinc-900 to-zinc-950">
+          <h3 className="font-bold text-[13px] text-white mb-1 group-hover:text-pink-400 transition-colors line-clamp-1">
             {video.title}
           </h3>
-          <p className="text-zinc-500 text-[10px] flex items-center gap-2 font-medium uppercase tracking-wider">
-            <span>{video.views} VISUALIZAÇÕES</span>
-            <span>•</span>
-            <span className="text-pink-500/80">ULTRA HD 4K</span>
-          </p>
+          <div className="flex items-center gap-2 text-[10px] text-zinc-500 font-medium uppercase tracking-wider">
+            <span>{video.views} views</span>
+            <span className="w-0.5 h-0.5 bg-zinc-600 rounded-full" />
+            {video.ready && video.duration > 0 ? (
+              <span className="text-zinc-400">{video.durationLabel}</span>
+            ) : (
+              <span className="text-zinc-600">carregando...</span>
+            )}
+          </div>
         </div>
       </div>
     );
   };
+
+  if (!initialized) return null;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -185,43 +394,30 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
           <VideoIcon className="w-5 h-5 text-amber-400" /> Sofia Oliveira
         </h3>
         <span className="bg-amber-500/10 text-amber-400 text-xs font-black px-4 py-1.5 rounded-full border border-amber-500/20">
-          16 VÍDEOS
+          {sofiaReady > 0 ? `${sofiaReady} VÍDEOS` : 'CARREGANDO...'}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sofiaVideos.map(renderVideoCard)}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {sofiaVideos.map(renderCard)}
       </div>
 
       {/* Camila section */}
-      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 rounded-2xl border border-zinc-800 shadow-lg mt-8">
+      <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 rounded-2xl border border-zinc-800 shadow-lg mt-6">
         <h3 className="text-white text-lg font-black uppercase tracking-tighter flex items-center gap-2">
           <VideoIcon className="w-5 h-5 text-pink-400" /> 👯‍♀️ Camila Elle
         </h3>
         <span className="bg-pink-500/10 text-pink-400 text-xs font-black px-4 py-1.5 rounded-full border border-pink-500/20">
-          15 VÍDEOS
+          {camilaReady > 0 ? `${camilaReady} VÍDEOS` : 'CARREGANDO...'}
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {camilaVideos.map(renderVideoCard)}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {camilaVideos.map(renderCard)}
       </div>
 
       {/* Video player modal */}
-      {selected && (
-        <div className="fixed inset-0 w-screen h-screen z-[100] bg-black/95 flex items-center justify-center p-4 animate-fade-in backdrop-blur-sm"
-          onClick={() => setSelectedVideo(null)}>
-          <button className="absolute top-6 right-6 z-50 text-white bg-white/10 p-3 rounded-full hover:bg-white/20 transition-colors"><X size={24} /></button>
-          <div className="w-full max-w-6xl max-h-screen relative flex flex-col items-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-            <video src={selected.url} controls autoPlay playsInline
-              className="w-full h-full object-contain"
-              controlsList="nodownload" />
-            <div className="absolute top-4 left-4 bg-black/40 backdrop-blur px-4 py-1 rounded-full border border-white/10">
-              <p className="text-white text-xs font-bold">{selected.title}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {selected && <VideoPlayer video={selected} onClose={() => setSelectedVideo(null)} />}
     </div>
   );
 };
