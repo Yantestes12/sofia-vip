@@ -796,7 +796,7 @@ const App: React.FC = () => {
           <PhotoGrid isVip={isVip} onUnlock={() => setShowPaymentModal(true)} />
         )}
         {activeTab === 'videos' && (
-          <VideoGallery isVip={isVip} onUnlock={() => setShowPaymentModal(true)} />
+          <VideoGallery isVip={isVip} isFreePeriod={isFreePeriod} onUnlock={() => setShowPaymentModal(true)} />
         )}
         {activeTab === 'live' && (
           <LiveSection isVip={isVip} isFreePeriod={isFreePeriod} onUnlock={() => setShowPaymentModal(true)} />
