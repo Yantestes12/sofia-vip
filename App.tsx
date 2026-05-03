@@ -601,6 +601,13 @@ const App: React.FC = () => {
   const [showGroupOffer, setShowGroupOffer] = useState(false);
   const [showWelcome, setShowWelcome] = useState(() => !sessionStorage.getItem(WELCOME_SEEN_KEY));
   const [activeTab, setActiveTab] = useState<TabType>('feed');
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Splash screen: 4s loading to preload content
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Verifica VIP e free period
   useEffect(() => {
@@ -709,8 +716,80 @@ const App: React.FC = () => {
     }
   };
 
+  // Splash screen
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-zinc-950 z-[9999] flex flex-col items-center justify-center select-none">
+        {/* Glow background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] animate-pulse" />
+        </div>
+
+        {/* Avatar with ring */}
+        <div className="relative mb-8 z-10">
+          <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 shadow-[0_0_40px_rgba(236,72,153,0.3)]"
+            style={{ animation: 'spin 3s linear infinite' }}>
+            <div className="w-full h-full rounded-full bg-zinc-950 p-1">
+              <img
+                src={profileData.avatarUrl}
+                alt="Sofia"
+                className="w-full h-full rounded-full object-cover"
+              />
+            </div>
+          </div>
+          {/* Online badge */}
+          <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-[3px] border-zinc-950 shadow-lg" />
+        </div>
+
+        {/* Name */}
+        <h1 className="text-white font-black text-2xl tracking-tight mb-1 z-10">Sofia Oliveira</h1>
+        <p className="text-zinc-500 text-sm font-medium mb-8 z-10">@sofiaoliveira</p>
+
+        {/* Fire + Loading text */}
+        <div className="flex items-center gap-2 mb-4 z-10">
+          <span className="text-2xl" style={{ animation: 'bounce 1s ease-in-out infinite' }}>🔥</span>
+          <p className="text-zinc-400 text-sm font-bold uppercase tracking-widest">Carregando conteúdos</p>
+          <span className="text-2xl" style={{ animation: 'bounce 1s ease-in-out infinite 0.2s' }}>🔥</span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-64 h-1.5 bg-zinc-800 rounded-full overflow-hidden z-10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400"
+            style={{
+              animation: 'loadProgress 3.5s ease-out forwards',
+            }}
+          />
+        </div>
+
+        <p className="text-zinc-600 text-[10px] uppercase tracking-[3px] mt-6 z-10 font-bold">
+          conteúdo privado • acesso exclusivo
+        </p>
+
+        {/* Keyframe animations */}
+        <style>{`
+          @keyframes loadProgress {
+            0% { width: 0%; }
+            30% { width: 40%; }
+            60% { width: 70%; }
+            85% { width: 90%; }
+            100% { width: 100%; }
+          }
+          @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+          }
+          @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-200 pb-24 relative select-none">
+    <div className="min-h-screen bg-zinc-950 text-zinc-200 pb-24 relative select-none animate-fade-in">
       {/* Welcome popup overlay */}
       {showWelcome && <WelcomeFlow onComplete={() => setShowWelcome(false)} />}
 
