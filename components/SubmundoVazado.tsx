@@ -11,24 +11,24 @@ const SubmundoVazado: React.FC<SubmundoVazadoProps> = ({ accessId, onBack }) => 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const categories = [
-    { id: 'novinhas', name: 'NOVINHAS BR', thumb: 'https://secreto.meuprivacy.digital/acesso/foto20.jpg', count: '42 VÍDEOS' },
-    { id: 'amadores', name: 'CASEIROS REAIS', thumb: 'https://secreto.meuprivacy.digital/acesso/foto27.jpg', count: '28 VÍDEOS' },
-    { id: 'flagras', name: 'FLAGRAS OCULTOS', thumb: 'https://secreto.meuprivacy.digital/acesso/foto10.jpg', count: '15 VÍDEOS' },
-    { id: 'trans', name: 'SUBMUNDO TRANS', thumb: 'https://secreto.meuprivacy.digital/acesso/foto21.jpg', count: '19 VÍDEOS' },
-    { id: 'premium', name: 'PRIVADOS VIP', thumb: 'https://secreto.meuprivacy.digital/acesso/foto45.jpg', count: '32 VÍDEOS' },
-    { id: 'raros', name: 'ARQUIVOS RAROS', thumb: 'https://secreto.meuprivacy.digital/acesso/foto22.jpg', count: '11 VÍDEOS' },
+    { id: 'novinhas', name: 'NOVINHAS BR', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto20.webp', count: '42 VÍDEOS' },
+    { id: 'amadores', name: 'CASEIROS REAIS', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto27.webp', count: '28 VÍDEOS' },
+    { id: 'flagras', name: 'FLAGRAS OCULTOS', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto10.webp', count: '15 VÍDEOS' },
+    { id: 'trans', name: 'SUBMUNDO TRANS', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto21.webp', count: '19 VÍDEOS' },
+    { id: 'premium', name: 'PRIVADOS VIP', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto25.webp', count: '32 VÍDEOS' },
+    { id: 'raros', name: 'ARQUIVOS RAROS', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto22.webp', count: '11 VÍDEOS' },
   ];
 
   const mediaList = [
-    { title: 'Deficiente rabuda e gostosa, colocando dentro bem devagar nessa vadiazinha (RESTRITO)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto22.jpg' },
-    { title: 'Primas e irmãs⁺¹⁸ se pegando em live, novinhas⁺¹⁸ brincando com seus corpos (VIRGENS⁺¹⁸)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_2.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto20.jpg' },
-    { title: 'FEMBOY (TRANS)☠️❌\nMeu amigo Trans percebeu que eu sempre quis que ele me chupasse...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_3.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto21.jpg' },
-    { title: '❌⚠️DEFICIENTE⚠️❌\nEncostei minha mão na coxa dela, e ela fingiu que não tinha percebido...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_4.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto24.jpg' },
-    { title: 'Filho mostrando que sua mãe deixa ele encostar o p4u nela! o silêncio em casa, o pau bem duro encostando na mamãe...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_5.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto27.jpg' },
-    { title: 'Irmãos Baianos foram expostos na net, tinha medo colocar dentro da própria irmã, até hoje...🔥', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_6.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto8.jpg' },
-    { title: 'Verdade e desafio termina com irmã mamando o próprio irmão (IRMÃOS DE SANGUE MESMO) ‼️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_7.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto2.jpg' },
-    { title: 'Estavam bebendo, mas ele nem percebeu que sua irmã estava mamando junto com sua namorada ☠️⚠️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_8.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto1.jpg' },
-    { title: 'OCULTO - "sempre quis colocar a mão em seu pau..." Diz prima para o próprio primo', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_9.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto4.jpg' },
+    { title: 'Deficiente rabuda e gostosa, colocando dentro bem devagar nessa vadiazinha (RESTRITO)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto22.webp' },
+    { title: 'Primas e irmãs⁺¹⁸ se pegando em live, novinhas⁺¹⁸ brincando com seus corpos (VIRGENS⁺¹⁸)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_2.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto20.webp' },
+    { title: 'FEMBOY (TRANS)☠️❌\nMeu amigo Trans percebeu que eu sempre quis que ele me chupasse...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_3.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto21.webp' },
+    { title: '❌⚠️DEFICIENTE⚠️❌\nEncostei minha mão na coxa dela, e ela fingiu que não tinha percebido...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_4.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto24.webp' },
+    { title: 'Filho mostrando que sua mãe deixa ele encostar o p4u nela! o silêncio em casa, o pau bem duro encostando na mamãe...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_5.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto27.webp' },
+    { title: 'Irmãos Baianos foram expostos na net, tinha medo colocar dentro da própria irmã, até hoje...🔥', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_6.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto8.webp' },
+    { title: 'Verdade e desafio termina com irmã mamando o próprio irmão (IRMÃOS DE SANGUE MESMO) ‼️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_7.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto2.webp' },
+    { title: 'Estavam bebendo, mas ele nem percebeu que sua irmã estava mamando junto com sua namorada ☠️⚠️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_8.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp' },
+    { title: 'OCULTO - "sempre quis colocar a mão em seu pau..." Diz prima para o próprio primo', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_9.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto4.webp' },
   ];
 
   const handleBack = () => {

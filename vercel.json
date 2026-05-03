@@ -1,0 +1,6 @@
+{
+  "rewrites": [
+    { "source": "/api/pix/:path*", "destination": "https://nexuspag.com/api/pix/:path*" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
+}

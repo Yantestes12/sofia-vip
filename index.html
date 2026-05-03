@@ -5,6 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Sofia Oliveira VIP</title>
     <meta name="description" content="Perfil VIP exclusivo de Sofia Oliveira. Conteúdo privado para membros." />
+
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s){
+        if(f.fbq)return;n=f.fbq=function(){
+          n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments);
+        };
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
+        t=b.createElement(e);t.async=!0;t.src=v;
+        s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+      }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init','964003592744912');
+      fbq('track','PageView');
+      fbq('track','ViewContent',{content_name:'perfil_sofia',content_category:'landing_page'});
+    </script>
+    <!-- End Meta Pixel Code -->
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap" rel="stylesheet">
     <style>
@@ -89,6 +106,9 @@
   </head>
   <body oncontextmenu="return false;">
     <div id="root"></div>
+    <noscript>
+      <img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=964003592744912&ev=PageView&noscript=1" />
+    </noscript>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

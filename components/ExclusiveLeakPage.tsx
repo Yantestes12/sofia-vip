@@ -26,9 +26,11 @@ const generateAccessId = () => {
   return result;
 };
 
-const N8N_WEBHOOK_URL = 'https://weebhooks.synio.com.br/webhook';
+const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
-const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, onDirectAccess: () => void }) => {
+const VAZADOS_PROMO_KEY = 'vazados_promo_start';
+
+const PixPaymentModal = ({ onClose, onConfirm, accessId, currentPrice }: { onClose: () => void, onConfirm: (id: string) => void, accessId: string, currentPrice: number }) => {
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pixData, setPixData] = useState<{ qrcode: string, copiaCola: string, id: string } | null>(null);
@@ -45,46 +47,97 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
     return () => clearInterval(timer);
   }, [pixData, timeLeft]);
 
-  // Gerar PIX via n8n webhook
+  // Gerar PIX diretamente via NexusPag (proxy Vercel)
   useEffect(() => {
     const createPix = async () => {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${N8N_WEBHOOK_URL}/gerar-pix-nexuspag`, {
+        console.log('[PIX-Leak] Chamando NexusPag via proxy Vercel...');
+        const response = await fetch('/api/pix/create', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ value: 29.90 })
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({ 
+            amount: currentPrice,
+            webhook_url: 'https://weebhooks.synio.com.br/webhook/receber-nexuspag'
+          }),
+          signal: controller.signal
         });
         
-        const data = await response.json();
+        clearTimeout(timeout);
+        
+        const text = await response.text();
+        console.log('[PIX-Leak] Resposta bruta NexusPag:', text);
+        
+        let data: any;
+        try {
+          data = JSON.parse(text);
+        } catch (parseErr) {
+          console.error('[PIX-Leak] Falha ao parsear JSON:', text);
+          setError("Resposta inválida do servidor.");
+          return;
+        }
+
+        console.log('[PIX-Leak] Resposta parseada:', JSON.stringify(data, null, 2));
 
         if (response.ok) {
-          const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
+          const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+          console.log('[PIX-Leak] Objeto tx extraído:', JSON.stringify(tx, null, 2));
           
-          if (tx && tx.qr_code_base64 && tx.pix_copia_cola) {
+          const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
+          const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
+          
+          // QR code image: NexusPag retorna vazio, gera a partir do pix_copia_cola
+          let qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qr_code_image;
+          
+          if ((!qrCodeImage || qrCodeImage === '') && copiaCola) {
+            qrCodeImage = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(copiaCola)}`;
+            console.log('[PIX-Leak] QR code gerado via qrserver.com');
+          }
+
+          console.log('[PIX-Leak] Campos resolvidos:', { 
+            qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
+            copiaCola: copiaCola ? copiaCola.substring(0, 80) + '...' : null, 
+            txId,
+            todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
+          });
+
+          if (copiaCola) {
             const pixInfo = {
-              qrcode: tx.qr_code_base64,
-              copiaCola: tx.pix_copia_cola,
-              id: tx.id || tx.txid || tx.uuid
+              qrcode: qrCodeImage && qrCodeImage.startsWith('data:') ? qrCodeImage : (qrCodeImage || ''),
+              copiaCola: copiaCola,
+              id: txId
             };
             setPixData(pixInfo);
 
-            // Salvar no localStorage como pendente
             localStorage.setItem(`access_${accessId}`, JSON.stringify({
               pix_id: pixInfo.id,
               status: 'pending',
               createdAt: new Date().toISOString()
             }));
           } else {
-            setError("Formato de PIX inválido recebido.");
+            console.error('[PIX-Leak] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null');
+            setError("PIX criado mas código copia e cola não retornado.");
           }
         } else {
-          setError("Erro ao comunicar com o servidor de pagamento.");
+          console.error('[PIX-Leak] HTTP erro:', response.status, data);
+          setError(`Erro ${response.status}: ${data?.message || data?.error || 'Falha no servidor'}`);
         }
       } catch (err: any) {
-        setError(err.message || 'Falha na conexão.');
+        clearTimeout(timeout);
+        if (err.name === 'AbortError') {
+          console.error('[PIX-Leak] Timeout de 30s!');
+          setError("Timeout: servidor demorou demais. Recarregue a página.");
+        } else {
+          setError(err.message || 'Falha na conexão.');
+        }
       } finally {
         setLoading(false);
       }
@@ -107,15 +160,17 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
     if (!isSilent) setIsVerifying(true);
     
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/consultar-pix-nexuspag?id=${txId}`);
+      const response = await fetch(`/api/pix/${txId}`, {
+        headers: { 'x-api-key': API_KEY }
+      });
       const data = await response.json();
+      console.log('[PIX-Leak] Consulta status:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
-        const status = tx?.status?.toUpperCase() || (data.status ? data.status.toUpperCase() : '');
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        const status = (tx?.status || data?.status || '').toUpperCase();
         
-        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
-          // Atualizar localStorage e confirmar
+        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO' || status === 'APPROVED') {
           localStorage.setItem(`access_${accessId}`, JSON.stringify({
             pix_id: txId,
             status: 'paid',
@@ -123,14 +178,14 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           }));
           onConfirm(accessId);
         } else if (!isSilent) {
-          alert("Pagamento ainda não identificado. Aguarde alguns instantes.");
+          setError("Pagamento ainda não identificado. Aguarde alguns instantes.");
         }
       } else if (!isSilent) {
-        alert("Erro ao consultar status. Tente novamente.");
+        setError("Erro ao consultar status. Tente novamente.");
       }
     } catch (err) {
       if (!isSilent) {
-        alert("Falha ao verificar. Tente novamente.");
+        setError("Falha ao verificar. Tente novamente.");
       }
     } finally {
       if (!isSilent) setIsVerifying(false);
@@ -144,11 +199,15 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
   };
 
   const handleCopy = () => {
-    if (pixData?.copiaCola) {
-      navigator.clipboard.writeText(pixData.copiaCola);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!pixData?.copiaCola) return;
+    const text = pixData.copiaCola;
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      setCopied(true); setTimeout(() => setCopied(false), 2000);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); }).catch(fallback);
+    } else { fallback(); }
   };
 
   return (
@@ -171,7 +230,7 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
           {loading ? (
             <div className="py-16 flex flex-col items-center gap-4">
               <div className="w-12 h-12 border-4 border-[#10b981] border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Gerando PIX R$ 29,90...</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Gerando PIX R$ {currentPrice.toFixed(2).replace('.', ',')}...</p>
             </div>
           ) : error ? (
             <div className="text-center py-12">
@@ -184,7 +243,7 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
             <>
               <div className="text-center mb-6">
                 <span className="text-[10px] font-black uppercase text-zinc-300 tracking-widest">VALOR DO ACESSO</span>
-                <div className="text-5xl font-black text-zinc-900 italic tracking-tighter">R$ 29,90</div>
+                <div className="text-5xl font-black text-zinc-900 italic tracking-tighter">R$ {currentPrice.toFixed(2).replace('.', ',')}</div>
               </div>
               <div className="bg-white p-2 rounded-2xl border border-zinc-100 shadow-sm mb-6">
                 <img src={pixData.qrcode} alt="QR Code" className="w-48 h-48 object-contain" />
@@ -204,14 +263,14 @@ const PixPaymentModal = ({ onClose, onConfirm, accessId, onDirectAccess }: { onC
                 {isVerifying ? "VERIFICANDO..." : "JÁ PAGUEI, LIBERAR SUBMUNDO"}
               </button>
 
+              {error && (
+                <p className="text-red-500 text-sm mb-2 font-bold text-center w-full bg-red-500/10 p-2 rounded-lg">{error}</p>
+              )}
+
               <div className="flex items-center justify-center gap-2 text-zinc-400 font-mono text-lg mt-4 mb-2">
                 <Timer className="w-5 h-5" /> {formatTime(timeLeft)}
               </div>
               <p className="text-zinc-400 text-[9px] mb-4 text-center">Verificação automática a cada 5s • Expira em 10 min</p>
-
-              <button onClick={onDirectAccess} className="w-full bg-zinc-900/5 text-zinc-400 border border-zinc-200 border-dashed py-2 rounded-xl text-[10px] font-black uppercase hover:bg-zinc-900/10 transition-colors">
-                [ DEBUG ] ATUALIZAR STATUS PARA PAGO
-              </button>
             </>
           ) : null}
         </div>
@@ -233,6 +292,47 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(12 * 60 + 45);
 
+  // Timer de promoção Vazados: R$14,71 fixo
+  const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
+  const [currentPrice, setCurrentPrice] = useState(14.71);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(VAZADOS_PROMO_KEY);
+    let startTime: number;
+
+    if (stored) {
+      startTime = parseInt(stored, 10);
+    } else {
+      startTime = Date.now();
+      localStorage.setItem(VAZADOS_PROMO_KEY, startTime.toString());
+    }
+
+    const updatePromo = () => {
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const promoTotal = 6 * 60; // 6 minutos
+      const remaining = promoTotal - elapsed;
+
+      if (remaining > 0) {
+        setPromoSecondsLeft(remaining);
+      } else {
+        setPromoSecondsLeft(0);
+      }
+      setCurrentPrice(14.71);
+    };
+
+    updatePromo();
+    const interval = setInterval(updatePromo, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isPromoActive = promoSecondsLeft > 0;
+
+  const formatPromoTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
   useEffect(() => {
     const timer = setInterval(() => setTimeLeft(p => p > 0 ? p - 1 : 0), 1000);
     return () => clearInterval(timer);
@@ -248,6 +348,10 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
     const newId = generateAccessId();
     setPendingId(newId);
     setShowPixModal(true);
+    // Facebook Pixel: Lead event
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Lead', { content_name: 'vazados_submundo', value: currentPrice, currency: 'BRL' });
+    }
   };
 
   const handleConfirmAccess = (id: string) => {
@@ -262,31 +366,22 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
     }, 3000);
   };
 
-  const handleDirectAccess = async () => {
-    // Ação de debug: Força o status 'paid' no localStorage
-    const debugId = pendingId || generateAccessId();
-    localStorage.setItem(`access_${debugId}`, JSON.stringify({
-      status: 'paid',
-      activatedAt: new Date().toISOString()
-    }));
-      
-    handleConfirmAccess(debugId);
-  };
+
 
   if (isUnlocked) {
     return <SubmundoVazado accessId={validatedId} onBack={() => setIsUnlocked(false)} />;
   }
 
   const mediaList = [
-    { title: 'Deficiente rabuda e gostosa, colocando dentro bem devagar nessa vadiazinha (RESTRITO)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto22.jpg' },
-    { title: 'Primas e irmãs⁺¹⁸ se pegando em live, novinhas⁺¹⁸ brincando com seus corpos (VIRGENS⁺¹⁸)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_2.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto20.jpg' },
-    { title: 'FEMBOY (TRANS)☠️❌\nMeu amigo Trans percebeu que eu sempre quis que ele me chupasse...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_3.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto21.jpg' },
-    { title: '❌⚠️DEFICIENTE⚠️❌\nEncostei minha mão na coxa dela, e ela fingiu que não tinha percebido...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_4.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto24.jpg' },
-    { title: 'Filho mostrando que sua mãe deixa ele encostar o p4u nela! o silêncio em casa, o pau bem duro encostando na mamãe...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_5.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto27.jpg' },
-    { title: 'Irmãos Baianos foram expostos na net, tinha medo colocar dentro da própria irmã, até hoje...🔥', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_6.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto8.jpg' },
-    { title: 'Verdade e desafio termina com irmã mamando o próprio irmão (IRMÃOS DE SANGUE MESMO) ‼️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_7.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto2.jpg' },
-    { title: 'Estavam bebendo, mas ele nem percebeu que sua irmã estava mamando junto com sua namorada ☠️⚠️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_8.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto1.jpg' },
-    { title: 'OCULTO - "sempre quis colocar a mão em seu pau..." Diz prima para o próprio primo', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_9.mp4', thumb: 'https://secreto.meuprivacy.digital/acesso/foto4.jpg' },
+    { title: 'Deficiente rabuda e gostosa, colocando dentro bem devagar nessa vadiazinha (RESTRITO)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto22.webp' },
+    { title: 'Primas e irmãs⁺¹⁸ se pegando em live, novinhas⁺¹⁸ brincando com seus corpos (VIRGENS⁺¹⁸)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_2.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto20.webp' },
+    { title: 'FEMBOY (TRANS)☠️❌\nMeu amigo Trans percebeu que eu sempre quis que ele me chupasse...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_3.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto21.webp' },
+    { title: '❌⚠️DEFICIENTE⚠️❌\nEncostei minha mão na coxa dela, e ela fingiu que não tinha percebido...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_4.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto24.webp' },
+    { title: 'Filho mostrando que sua mãe deixa ele encostar o p4u nela! o silêncio em casa, o pau bem duro encostando na mamãe...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_5.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto27.webp' },
+    { title: 'Irmãos Baianos foram expostos na net, tinha medo colocar dentro da própria irmã, até hoje...🔥', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_6.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto8.webp' },
+    { title: 'Verdade e desafio termina com irmã mamando o próprio irmão (IRMÃOS DE SANGUE MESMO) ‼️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_7.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto2.webp' },
+    { title: 'Estavam bebendo, mas ele nem percebeu que sua irmã estava mamando junto com sua namorada ☠️⚠️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_8.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp' },
+    { title: 'OCULTO - "sempre quis colocar a mão em seu pau..." Diz prima para o próprio primo', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_9.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto4.webp' },
   ];
 
   return (
@@ -297,7 +392,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
 
       <div className="relative min-h-[70vh] flex items-center justify-center overflow-hidden border-b border-red-900/30 pt-10">
         <div className="absolute inset-0">
-          <img src="https://secreto.meuprivacy.digital/acesso/foto15.jpg" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
+          <img src="https://secreto.meuprivacy.digital/nataliexking/foto15.webp" className="w-full h-full object-cover opacity-20 blur-xl scale-110" />
           <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
         </div>
 
@@ -346,21 +441,45 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
 
               <div className="flex items-center justify-center gap-2 text-[10px] text-zinc-500 font-bold">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="text-green-400">{Math.floor(Math.random() * 80 + 120)} garotas online agora {cityName ? `em ${cityName}` : 'na sua região'}</span>
+                <span className="text-green-400">{(() => { const seed = parseInt(sessionStorage.getItem('leak_seed') || String(Math.floor(Math.random() * 80 + 120))); if (!sessionStorage.getItem('leak_seed')) sessionStorage.setItem('leak_seed', String(seed)); return seed; })()} garotas online agora {cityName ? `em ${cityName}` : 'na sua região'}</span>
               </div>
             </div>
           </div>
 
           <div className="flex flex-col items-center gap-6 pt-4">
-            <div className="bg-zinc-900/80 border border-red-900/40 px-8 py-4 rounded-3xl backdrop-blur-xl flex flex-col items-center">
-               <p className="text-[9px] text-zinc-500 uppercase font-black mb-1">O link de acesso expira em:</p>
-               <div className="flex items-center gap-2 text-2xl font-black text-red-500"><Timer size={20} /><span>{formatTime(timeLeft)}</span></div>
-            </div>
+
+            {/* Promo timer badge */}
+            {isPromoActive ? (
+              <div className="bg-gradient-to-r from-green-950/60 to-emerald-950/60 border-2 border-green-500/40 rounded-2xl px-8 py-5 backdrop-blur-xl flex flex-col items-center shadow-[0_0_30px_rgba(16,185,129,0.2)] w-full max-w-md">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                  <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO RELÂMPAGO ATIVA</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Timer size={22} className="text-green-400" />
+                  <span className="text-green-400 font-mono font-black text-3xl">{formatPromoTime(promoSecondsLeft)}</span>
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-zinc-400 text-xs line-through">R$ 89,00</span>
+                  <span className="text-green-400 font-black text-lg">R$ 14,71</span>
+                </div>
+                <p className="text-green-300/60 text-[9px] mt-1 font-bold">Promoção por tempo limitado — garanta agora!</p>
+              </div>
+            ) : (
+              <div className="bg-red-950/40 border-2 border-red-500/30 rounded-2xl px-8 py-5 backdrop-blur-xl flex flex-col items-center w-full max-w-md">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertTriangle size={14} className="text-red-400" />
+                  <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
+                </div>
+                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 14,71 expirou</p>
+              </div>
+            )}
+
             <button onClick={handleStartPurchase} className="group relative w-full max-w-md">
               <div className="absolute -inset-1 bg-red-600 rounded-2xl blur opacity-30 group-hover:opacity-100 transition duration-500"></div>
               <div className="relative bg-red-600 hover:bg-red-500 text-white font-black uppercase text-lg py-6 rounded-2xl transition-all shadow-2xl active:scale-95 flex items-center justify-center gap-4">
                 <span>LIBERAR ACESSO</span>
-                <span className="text-white/60 text-sm">R$ 29,90</span>
+                <span className="text-white/60 text-sm">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
               </div>
             </button>
             <p className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider">✅ Vazados + Grupo VIP de Garotas inclusos</p>
@@ -389,7 +508,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
          </div>
       </div>
 
-      {showPixModal && <PixPaymentModal accessId={pendingId} onClose={() => setShowPixModal(false)} onConfirm={handleConfirmAccess} onDirectAccess={handleDirectAccess} />}
+      {showPixModal && <PixPaymentModal accessId={pendingId} onClose={() => setShowPixModal(false)} onConfirm={handleConfirmAccess} currentPrice={currentPrice} />}
 
       {isProcessing && (
         <div className="fixed inset-0 z-[500] bg-black flex flex-col items-center justify-center">

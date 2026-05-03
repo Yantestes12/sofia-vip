@@ -1,61 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, CheckCircle2, ShieldAlert, Timer, Copy, Gem, AlertTriangle } from './Icons';
 
+
 const PROMO_STORAGE_KEY = 'sofia_promo_start';
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onOpenVazados?: () => void;
   leadLocation?: string;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, leadLocation }) => {
-  const [step, setStep] = useState<'intro' | 'loading' | 'pix_generated' | 'verifying' | 'success'>('intro');
+const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, onOpenVazados, leadLocation }) => {
+  const [step, setStep] = useState<'intro' | 'loading' | 'pix_generated' | 'verifying' | 'success' | 'upsell'>('intro');
   const [timeLeft, setTimeLeft] = useState(600);
   const [pixData, setPixData] = useState<{ qrcode: string, copiaCola: string, id: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
-  // Timer de promoção: 8 minutos para R$6,90, depois R$14,00
-  const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
-  const [currentPrice, setCurrentPrice] = useState(6.90);
+  // Preço VIP Vitalício R$16,90
+  const basePrice = 16.90;
+  const discount = 0;
+  const currentPrice = basePrice - discount;
 
-  const N8N_WEBHOOK_URL = 'https://weebhooks.synio.com.br/webhook';
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
   // Extrai cidade da localização
   const cityName = leadLocation ? leadLocation.split(',')[0].trim() : '';
 
-  // Inicializa o timer de promoção com persistência no localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem(PROMO_STORAGE_KEY);
-    let startTime: number;
 
-    if (stored) {
-      startTime = parseInt(stored, 10);
-    } else {
-      startTime = Date.now();
-      localStorage.setItem(PROMO_STORAGE_KEY, startTime.toString());
-    }
-
-    const updatePromo = () => {
-      const elapsed = Math.floor((Date.now() - startTime) / 1000);
-      const promoTotal = 8 * 60; // 8 minutos
-      const remaining = promoTotal - elapsed;
-
-      if (remaining > 0) {
-        setPromoSecondsLeft(remaining);
-        setCurrentPrice(6.90);
-      } else {
-        setPromoSecondsLeft(0);
-        setCurrentPrice(14.00);
-      }
-    };
-
-    updatePromo();
-    const interval = setInterval(updatePromo, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -63,6 +38,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
       setPixData(null);
       setTimeLeft(600);
       setErrorMsg("");
+      setCopied(false);
+      // Facebook Pixel: AddToCart event
+      if (typeof window !== 'undefined' && (window as any).fbq) {
+        (window as any).fbq('track', 'AddToCart', { content_name: 'segredinho_sofia', value: currentPrice, currency: 'BRL' });
+      }
     }
   }, [isOpen]);
 
@@ -91,68 +71,145 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Chama a NexusPag diretamente via proxy do Vercel (sem depender do n8n)
   const handleGeneratePix = async () => {
     setStep('loading');
     setErrorMsg("");
     
+    // Timeout de 30 segundos pra não ficar infinito
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000);
+    
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/gerar-pix-nexuspag`, {
+      console.log('[PIX] Chamando NexusPag via proxy Vercel...');
+      const response = await fetch('/api/pix/create', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
         },
         body: JSON.stringify({
-          value: currentPrice,
-          apiKey: API_KEY
-        })
+          amount: currentPrice,
+          webhook_url: 'https://weebhooks.synio.com.br/webhook/receber-nexuspag'
+        }),
+        signal: controller.signal
       });
 
-      const data = await response.json();
+      clearTimeout(timeout);
+
+      const text = await response.text();
+      console.log('[PIX] Resposta bruta NexusPag:', text);
+      
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error('[PIX] Falha ao parsear JSON:', text);
+        setErrorMsg("Resposta inválida do servidor.");
+        setStep('intro');
+        return;
+      }
+
+      console.log('[PIX] Resposta parseada:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
+        // Suporte a múltiplos formatos de resposta
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        console.log('[PIX] Objeto tx extraído:', JSON.stringify(tx, null, 2));
         
-        if (tx && tx.qr_code_base64 && tx.pix_copia_cola) {
+        // Resolve nomes de campo flexíveis
+        const copiaCola = tx?.pix_copia_cola || tx?.qr_code || tx?.pixCopiaECola || tx?.brcode || tx?.emv || tx?.copy_paste || tx?.pix_copy_paste;
+        const txId = tx?.id || tx?.txid || tx?.uuid || tx?.transaction_id;
+        
+        // QR code image: NexusPag retorna vazio, então geramos a partir do pix_copia_cola
+        let qrCodeImage = tx?.qr_code_base64 || tx?.qrcode_base64 || tx?.qr_code_image;
+        
+        // Se qr_code_base64 está vazio ou não existe, gera via API externa
+        if ((!qrCodeImage || qrCodeImage === '') && copiaCola) {
+          qrCodeImage = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(copiaCola)}`;
+          console.log('[PIX] QR code gerado via qrserver.com');
+        }
+        
+        console.log('[PIX] Campos resolvidos:', { 
+          qrCodeImage: qrCodeImage ? qrCodeImage.substring(0, 80) + '...' : null, 
+          copiaCola: copiaCola ? copiaCola.substring(0, 80) + '...' : null, 
+          txId,
+          todasAsChaves: tx ? Object.keys(tx) : 'tx é null'
+        });
+
+        if (copiaCola) {
              setPixData({
-                 qrcode: tx.qr_code_base64,
-                 copiaCola: tx.pix_copia_cola,
-                 id: tx.id || tx.txid || tx.uuid
+                 qrcode: qrCodeImage && qrCodeImage.startsWith('data:') ? qrCodeImage : (qrCodeImage || ''),
+                 copiaCola: copiaCola,
+                 id: txId
              });
              setStep('pix_generated');
+             // Facebook Pixel: InitiateCheckout event
+             if (typeof window !== 'undefined' && (window as any).fbq) {
+                (window as any).fbq('track', 'InitiateCheckout', { content_name: 'segredinho_sofia', value: currentPrice, currency: 'BRL' });
+             }
         } else {
-             setErrorMsg("Formato de PIX inválido recebido.");
+             console.error('[PIX] COPIA E COLA FALTANDO! Chaves:', tx ? Object.keys(tx) : 'null', 'Valores:', JSON.stringify(tx, null, 2));
+             setErrorMsg("PIX criado mas código copia e cola não retornado.");
              setStep('intro');
         }
       } else {
-        setErrorMsg("Erro ao comunicar com o servidor de pagamento.");
+        console.error('[PIX] HTTP erro:', response.status, data);
+        setErrorMsg(`Erro ${response.status}: ${data?.message || data?.error || 'Falha no servidor'}`);
         setStep('intro');
       }
-    } catch (err) {
-      setErrorMsg("Erro de conexão. Tente novamente.");
+    } catch (err: any) {
+      clearTimeout(timeout);
+      if (err.name === 'AbortError') {
+        console.error('[PIX] Timeout de 30s atingido!');
+        setErrorMsg("Timeout: servidor demorou demais. Tente novamente.");
+      } else {
+        console.error('[PIX] Erro de conexão:', err);
+        setErrorMsg("Erro de conexão. Tente novamente.");
+      }
       setStep('intro');
     }
   };
 
+  // Consulta status diretamente na NexusPag via proxy Vercel
   const checkPaymentStatus = async (txId: string, isSilent = false) => {
     if (!isSilent) setStep('verifying');
     
     try {
-      const response = await fetch(`${N8N_WEBHOOK_URL}/consultar-pix-nexuspag?id=${txId}`, {
-        method: 'GET'
+      const response = await fetch(`/api/pix/${txId}`, {
+        method: 'GET',
+        headers: {
+          'x-api-key': API_KEY
+        }
       });
 
       const data = await response.json();
+      console.log('[PIX] Consulta status:', JSON.stringify(data, null, 2));
 
       if (response.ok) {
-        const tx = data.transaction || (Array.isArray(data) ? data[0].transaction || data[0] : data);
-        const status = tx?.status?.toUpperCase() || (data.status ? data.status.toUpperCase() : '');
+        const tx = data.transaction || data.data || (Array.isArray(data) ? (data[0]?.transaction || data[0]) : data);
+        const status = (tx?.status || data?.status || '').toUpperCase();
         
-        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO') {
+        if (status === 'PAID' || status === 'COMPLETED' || status === 'PAGO' || status === 'APPROVED') {
           setStep('success');
+          // Ativa VIP imediatamente
+          onSuccess();
+          // Facebook Pixel: Purchase event (R$4,50 real)
+          if (typeof window !== 'undefined' && (window as any).fbq) {
+            const eventID = 'purchase_' + Date.now();
+            (window as any).fbq('track', 'Purchase', {
+              value: currentPrice,
+              currency: 'BRL',
+              content_ids: ['segredinho_sofia'],
+              content_type: 'product',
+              content_name: 'Segredinho Sofia'
+            }, { eventID });
+            console.log('[Pixel] Purchase disparado - valor:', currentPrice, 'eventID:', eventID);
+          }
+          // Depois de 2.5s mostra upsell
           setTimeout(() => {
-            onSuccess();
-            onClose();
-          }, 2000);
+            setStep('upsell');
+          }, 2500);
         } else if (!isSilent) {
           setErrorMsg("Pagamento ainda não identificado.");
           setStep('pix_generated');
@@ -170,15 +227,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   };
 
   const copyToClipboard = () => {
-    if (pixData) {
-      navigator.clipboard.writeText(pixData.copiaCola);
-      alert("Chave Pix Copiada!");
-    }
+    if (!pixData) return;
+    const text = pixData.copiaCola;
+    const fallback = () => {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+      setCopied(true); setTimeout(() => setCopied(false), 2500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); }).catch(fallback);
+    } else { fallback(); }
   };
 
   if (!isOpen) return null;
 
-  const isPromoActive = promoSecondsLeft > 0;
+
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in sm:p-6">
@@ -192,90 +254,79 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
         {step === 'intro' && (
           <div className="p-6 sm:p-8 text-center animate-fade-in-up mt-4">
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/30">
-              <Lock className="w-8 h-8 text-amber-500" />
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/30">
+              <Lock className="w-8 h-8 text-pink-500" />
             </div>
             
             <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">
-              CONTEÚDO PRIVADO
+              Meu Segredinho 😈
             </h2>
             
             <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
-              Desbloqueie agora o acesso VIP temporário ao perfil fechado da Sofia. Mídias exclusivas sem censura e conteúdos secretos.
+              Amor, esses são os meus conteúdos mais íntimos... coisas que eu <span className="text-white font-bold">tenho vergonha de postar</span> em qualquer lugar 🙈💦<br/><br/>
+              Desbloqueando você ganha acesso <span className="text-amber-400 font-bold">VITALÍCIO</span> — pra sempre, sem cobranças extras 💕
             </p>
 
-            {/* Timer de promoção */}
-            {isPromoActive ? (
-              <div className="bg-gradient-to-r from-green-950/50 to-emerald-950/50 border border-green-500/30 rounded-xl p-4 mb-5 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/5"></div>
-                <div className="relative z-10">
-                  <div className="flex items-center justify-center gap-2 mb-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ATIVA</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-3">
-                    <Timer className="w-5 h-5 text-green-400" />
-                    <span className="text-green-400 font-mono font-black text-2xl">{formatTime(promoSecondsLeft)}</span>
-                  </div>
-                  <p className="text-green-300/70 text-[10px] mt-2 font-bold">Após o tempo o valor será <span className="text-red-400 line-through">R$ 14,00</span></p>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-red-950/30 border border-red-500/20 rounded-xl p-4 mb-5">
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
-                </div>
-                <p className="text-zinc-400 text-[10px]">O preço promocional expirou</p>
-              </div>
-            )}
+
 
             {/* Preço */}
             <div className="bg-zinc-950 rounded-xl p-4 mb-5 border border-zinc-800">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-zinc-400 text-sm font-medium">Acesso VIP Completo</span>
-                <div className="flex items-center gap-2">
-                  {isPromoActive && (
-                    <span className="text-zinc-500 line-through text-xs">R$ 14,00</span>
-                  )}
-                  <span className="text-white font-black">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
-                </div>
+                <span className="text-zinc-400 text-sm font-medium">Segredinho Completo 😈</span>
+                <span className="text-white font-black">R$ {basePrice.toFixed(2).replace('.', ',')}</span>
               </div>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-zinc-400 text-sm font-medium">Lives Diárias Exclusivas</span>
+                <span className="text-zinc-400 text-sm font-medium">Vídeos Sem Censura</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-zinc-400 text-sm font-medium">Bônus Vazados</span>
+                <span className="text-zinc-400 text-sm font-medium">Fotos Proibidas</span>
                 <span className="text-green-500 font-black text-xs">INCLUSO</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400 text-sm font-medium">Ao Vivo Exclusivo 🔴</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-400 text-sm font-medium">Comentários VIP 💬</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-amber-400 text-sm font-bold">Acesso Vitalício ♾️</span>
+                <span className="text-green-500 font-black text-xs">INCLUSO</span>
+              </div>
+              {discount > 0 && (
+                <>
+                  <div className="h-px bg-zinc-800 my-3"></div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-emerald-400 text-sm font-bold flex items-center gap-1">✅ Desconto Verificação</span>
+                    <span className="text-emerald-400 font-black">- R$ {discount.toFixed(2).replace('.', ',')}</span>
+                  </div>
+                </>
+              )}
               <div className="h-px bg-zinc-800 my-3"></div>
               <div className="flex justify-between items-center">
                 <span className="text-white font-bold">Total a pagar</span>
-                <span className="text-amber-500 font-black text-xl">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
+                <div className="flex items-center gap-2">
+                  {discount > 0 && <span className="text-zinc-500 line-through text-sm">R$ {basePrice.toFixed(2).replace('.', ',')}</span>}
+                  <span className="text-amber-500 font-black text-xl">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>
+                </div>
               </div>
             </div>
 
-            {/* BÔNUS: Grupo de mulheres da cidade */}
+            {/* BÔNUS: Faculdade + ajuda */}
             <div className="bg-gradient-to-b from-pink-950/30 to-zinc-950/50 border border-pink-500/20 rounded-xl p-4 mb-5 text-left relative overflow-hidden">
-              <div className="absolute top-2 right-2">
-                <span className="bg-pink-500 text-white text-[7px] font-black uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">BÔNUS</span>
-              </div>
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 bg-pink-500/20 rounded-full flex items-center justify-center shrink-0 border border-pink-500/30 mt-0.5">
-                  <span className="text-lg">📹</span>
+                  <span className="text-lg">📚</span>
                 </div>
                 <div>
                   <h4 className="text-white font-black text-sm uppercase tracking-tight leading-tight">
-                    Grupo VIP de Mulheres {cityName ? `de ${cityName}` : 'da sua cidade'}
+                    Me ajuda a pagar minha faculdade 🥺
                   </h4>
                   <p className="text-zinc-400 text-[11px] leading-relaxed mt-1">
-                    Você também libera acesso ao <span className="text-pink-400 font-bold">grupo exclusivo</span> com mulheres safadas {cityName ? `de ${cityName}` : 'da sua região'}, <span className="text-white font-semibold">loucas para fazer chamada de vídeo e se encontrar</span> de graça, sempre que você quiser! 🔥
+                    Amor, o que é <span className="text-pink-400 font-bold">R$ {currentPrice.toFixed(2).replace('.', ',')}</span>? O preço de um café na padaria com pão com presunto... <span className="text-white font-semibold">pra mim é a diferença entre continuar meus estudos ou ter que largar tudo</span> 😢
                   </p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span className="text-green-400 text-[9px] font-bold">{Math.floor(Math.random() * 60 + 80)} mulheres online agora</span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -286,9 +337,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
 
             <button 
               onClick={handleGeneratePix}
-              className="w-full py-4 px-6 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-4 px-6 bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_20px_rgba(236,72,153,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              LIBERAR ACESSO VIP — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-black" />
+              😈 DESBLOQUEAR VIP VITALÍCIO — R$ {currentPrice.toFixed(2).replace('.', ',')} <Gem size={18} className="fill-white" />
             </button>
             <div className="flex items-center justify-center gap-2 mt-4 text-zinc-500 text-xs font-medium">
               <ShieldAlert className="w-4 h-4" /> Pagamento 100% Seguro e Anônimo
@@ -329,9 +380,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                        />
                        <button 
                           onClick={copyToClipboard}
-                          className="px-3 shrink-0 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg transition-colors flex items-center gap-1 uppercase text-[10px] font-bold"
+                          className={`px-3 shrink-0 py-2 ${copied ? 'bg-green-600' : 'bg-zinc-800 hover:bg-zinc-700'} text-white rounded-lg transition-colors flex items-center gap-1 uppercase text-[10px] font-bold`}
                        >
-                           <Copy size={12} /> COPIAR
+                           <Copy size={12} /> {copied ? 'COPIADO ✓' : 'COPIAR'}
                        </button>
                    </div>
                </div>
@@ -366,8 +417,78 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
              <div className="w-20 h-20 mx-auto rounded-full bg-green-500/20 flex items-center justify-center mb-6">
                  <CheckCircle2 className="w-10 h-10 text-green-500" />
              </div>
-             <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-2">PAGAMENTO APROVADO!</h3>
-             <p className="text-zinc-400">Liberando seu acesso VIP...</p>
+              <h3 className="text-white font-black text-2xl uppercase tracking-tight mb-2">PAGAMENTO APROVADO!</h3>
+              <p className="text-zinc-400">Liberando seu Segredinho 😈...</p>
+          </div>
+        )}
+
+        {step === 'upsell' && (
+          <div className="p-6 sm:p-8 text-center animate-fade-in-up">
+            {/* Header verde de sucesso */}
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <CheckCircle2 className="w-5 h-5 text-green-500" />
+              <span className="text-green-400 text-[10px] font-black uppercase tracking-widest">SEGREDINHO DESBLOQUEADO 😈</span>
+            </div>
+
+            {/* Separador */}
+            <div className="h-px bg-zinc-800 mb-6"></div>
+
+            {/* Oferta relâmpago */}
+            <div className="bg-gradient-to-b from-red-950/40 to-zinc-900 border-2 border-red-500/40 rounded-2xl p-6 mb-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-600/5 to-transparent"></div>
+              <div className="relative z-10">
+                <div className="inline-flex items-center gap-2 bg-red-600 text-white text-[9px] font-black uppercase px-4 py-1.5 rounded-full mb-4 animate-pulse tracking-widest">
+                  ⚡ OFERTA ÚNICA PRA VOCÊ
+                </div>
+
+                <h3 className="text-white font-black text-2xl uppercase italic tracking-tighter mb-2 leading-tight">
+                  SUBMUNDO <span className="text-red-500">VAZADO</span>
+                </h3>
+                <p className="text-zinc-400 text-sm mb-4 leading-relaxed">
+                  9 vídeos proibidos do submundo que <span className="text-white font-bold">você não encontra em nenhum outro lugar</span>. Conteúdo restrito, pesado e exclusivo.
+                </p>
+
+                {/* Preview dos vídeos */}
+                <div className="grid grid-cols-3 gap-1.5 mb-4">
+                  {['foto22.webp', 'foto20.webp', 'foto21.webp'].map((img, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden">
+                      <img src={`https://secreto.meuprivacy.digital/nataliexking/${img}`} className="w-full h-full object-cover blur-[3px] opacity-60" alt="" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Lock className="w-5 h-5 text-red-500" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Preço com desconto */}
+                <div className="bg-black/40 rounded-xl p-4 border border-red-500/20">
+                  <div className="flex items-center justify-center gap-3 mb-1">
+                    <span className="text-zinc-500 line-through text-lg">R$ 89,00</span>
+                    <span className="text-red-500 font-black text-3xl">R$ 14,71</span>
+                  </div>
+                  <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só pra quem desbloqueou o Segredinho</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Botão CTA */}
+            <button
+              onClick={() => {
+                onClose();
+                if (onOpenVazados) onOpenVazados();
+              }}
+              className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_30px_rgba(220,38,38,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-3"
+            >
+              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 14,71
+            </button>
+
+            {/* Botão pular */}
+            <button
+              onClick={onClose}
+              className="w-full py-3 text-zinc-600 text-xs font-bold uppercase hover:text-zinc-400 transition-colors"
+            >
+              Não, obrigado. Continuar navegando.
+            </button>
           </div>
         )}
 

@@ -1,10 +1,13 @@
 
-import React, { useState } from 'react';
-import { Lock, X, Gem } from './Icons';
+import React, { useState, useEffect, useRef } from 'react';
+import { Lock, X, Gem, AlertTriangle, ShieldAlert } from './Icons';
 
 interface StoriesProps {
   isVip: boolean;
+  isAgeVerified: boolean;
   onOpenSubscription: () => void;
+  onOpenVazados: () => void;
+  onRequestAgeVerification: () => void;
 }
 
 interface StoryItem {
@@ -14,90 +17,142 @@ interface StoryItem {
   mediaUrl: string;
   isVideo: boolean;
   isLocked: boolean;
+  isVazado?: boolean;
+  title?: string;
 }
 
-const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
+const VAZADO_VIDEOS = [
+  { title: 'Deficiente rabuda e gostosa, colocando dentro bem devagar (RESTRITO)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto22.webp' },
+  { title: 'Primas e irmãs⁺¹⁸ se pegando em live (VIRGENS⁺¹⁸)', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_2.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto20.webp' },
+  { title: 'FEMBOY (TRANS)☠️ Meu amigo Trans percebeu que eu sempre quis...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_3.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto21.webp' },
+  { title: '❌⚠️DEFICIENTE⚠️ Encostei minha mão na coxa dela...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_4.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto24.webp' },
+  { title: 'Filho mostrando que sua mãe deixa ele encostar o p4u nela...', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_5.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto27.webp' },
+  { title: 'Irmãos Baianos expostos na net... tinha medo colocar dentro da própria irmã 🔥', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_6.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto8.webp' },
+  { title: 'Verdade e desafio termina com irmã mamando o próprio irmão ‼️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_7.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto2.webp' },
+  { title: 'Estavam bebendo, e a irmã começou a mamar junto com a namorada ☠️', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_8.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto1.webp' },
+  { title: 'OCULTO - "sempre quis colocar a mão em seu pau..." Diz prima pro primo', url: 'https://pagamento.caixapretabr.com/wp-content/uploads/2026/01/SUBMUNDO-OCULTO_9.mp4', thumb: 'https://secreto.meuprivacy.digital/nataliexking/foto4.webp' },
+];
+
+const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscription, onOpenVazados, onRequestAgeVerification }) => {
   const [activeStory, setActiveStory] = useState<StoryItem | null>(null);
   const [progress, setProgress] = useState(0);
+  const [showBlurOverlay, setShowBlurOverlay] = useState(false);
+  const [showingVazados, setShowingVazados] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const storyStartTime = useRef<number>(0);
 
   const stories: StoryItem[] = [
-    { id: 1, label: "Hoje 🔥", thumb: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto1.jpg", isVideo: false, isLocked: false },
-    { id: 2, label: "Bastidores", thumb: "https://secreto.meuprivacy.digital/acesso/foto3.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto3.jpg", isVideo: false, isLocked: true },
-    { id: 3, label: "Sem roupa", thumb: "https://secreto.meuprivacy.digital/acesso/foto8.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto8.jpg", isVideo: false, isLocked: false },
-    { id: 4, label: "Provador 🛍️", thumb: "https://secreto.meuprivacy.digital/acesso/foto12.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto12.jpg", isVideo: false, isLocked: true },
-    { id: 5, label: "Chuveiro 🚿", thumb: "https://secreto.meuprivacy.digital/acesso/foto15.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto15.jpg", isVideo: false, isLocked: false },
-    { id: 6, label: "Lingerie ❤️", thumb: "https://secreto.meuprivacy.digital/acesso/foto19.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto19.jpg", isVideo: false, isLocked: true },
-    { id: 7, label: "Na cama 🛏️", thumb: "https://secreto.meuprivacy.digital/acesso/foto22.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto22.jpg", isVideo: false, isLocked: false },
-    { id: 8, label: "Espelho 🪞", thumb: "https://secreto.meuprivacy.digital/acesso/foto27.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto27.jpg", isVideo: false, isLocked: true },
-    { id: 9, label: "Safadeza 😈", thumb: "https://secreto.meuprivacy.digital/acesso/foto33.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto33.jpg", isVideo: false, isLocked: false },
-    { id: 10, label: "Segredo 🤫", thumb: "https://secreto.meuprivacy.digital/acesso/foto40.jpg", mediaUrl: "https://secreto.meuprivacy.digital/acesso/foto40.jpg", isVideo: false, isLocked: true },
+    { id: 1, label: "Hoje 💕", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto8.webp", isVideo: false, isLocked: false },
+    { id: 2, label: "Segredinho 😈", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", mediaUrl: "https://secreto.meuprivacy.digital/nataliexking/foto6.webp", isVideo: false, isLocked: true },
+    { id: 99, label: "VAZADOS", thumb: "https://secreto.meuprivacy.digital/nataliexking/foto20.webp", mediaUrl: "", isVideo: false, isLocked: false, isVazado: true, title: "⚠️ VAZADOS" },
   ];
 
+  // Build vazados stories from real videos
+  const vazadosStories: StoryItem[] = VAZADO_VIDEOS.map((v, i) => ({
+    id: 100 + i, label: `Vazado ${i + 1}`, thumb: v.thumb,
+    mediaUrl: v.url, isVideo: true, isLocked: false, title: v.title,
+  }));
+
   const handleStoryClick = (story: StoryItem) => {
-    const locked = story.isLocked && !isVip;
-    if (locked) {
-      onOpenSubscription();
-    } else {
-      setActiveStory(story);
+    if (story.isVazado) {
+      setShowingVazados(true);
+      setActiveStory(vazadosStories[0]);
       setProgress(0);
+      setShowBlurOverlay(false);
+      storyStartTime.current = Date.now();
+      return;
     }
+    if (story.isLocked && !isVip) {
+      if (!isAgeVerified) { onRequestAgeVerification(); return; }
+      onOpenSubscription();
+      return;
+    }
+    setShowingVazados(false);
+    setActiveStory(story);
+    setProgress(0);
+    setShowBlurOverlay(false);
+    storyStartTime.current = Date.now();
   };
 
-  // Auto-advance timer for story viewer
-  React.useEffect(() => {
-    if (!activeStory) return;
-    
-    const duration = 5000; // 5 seconds per story
+  // 10s blur trigger for vazados (or 30s for normal stories)
+  useEffect(() => {
+    if (!activeStory || isAgeVerified) return;
+    const delay = showingVazados ? 10000 : 30000;
+    const timer = setTimeout(() => {
+      setShowBlurOverlay(true);
+      if (videoRef.current) videoRef.current.pause();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [activeStory, isAgeVerified, showingVazados]);
+
+  // Auto-advance timer
+  useEffect(() => {
+    if (!activeStory || showBlurOverlay) return;
+    const duration = showingVazados ? 15000 : 6000;
     const interval = 50;
     const step = (interval / duration) * 100;
-    
+    const currentList = showingVazados ? vazadosStories : stories.filter(s => !s.isVazado && (!s.isLocked || isVip));
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
-          // Go to next story or close
-          const currentIndex = stories.findIndex(s => s.id === activeStory.id);
-          const nextStory = stories.slice(currentIndex + 1).find(s => !s.isLocked || isVip);
-          if (nextStory) {
-            setActiveStory(nextStory);
+          const currentIdx = currentList.findIndex(s => s.id === activeStory.id);
+          const next = currentList[currentIdx + 1];
+          if (next) {
+            setActiveStory(next);
+            setShowBlurOverlay(false);
+            storyStartTime.current = Date.now();
             return 0;
           } else {
             setActiveStory(null);
+            setShowingVazados(false);
             return 0;
           }
         }
         return prev + step;
       });
     }, interval);
-    
     return () => clearInterval(timer);
-  }, [activeStory, isVip]);
+  }, [activeStory, isVip, showingVazados, showBlurOverlay]);
+
+  const navigateStory = (direction: 'prev' | 'next') => {
+    if (!activeStory) return;
+    const currentList = showingVazados ? vazadosStories : stories.filter(s => !s.isVazado && (!s.isLocked || isVip));
+    const idx = currentList.findIndex(s => s.id === activeStory.id);
+    if (direction === 'next') {
+      const next = currentList[idx + 1];
+      if (next) { setActiveStory(next); setProgress(0); setShowBlurOverlay(false); storyStartTime.current = Date.now(); }
+      else { setActiveStory(null); setShowingVazados(false); }
+    } else {
+      const prev = currentList[idx - 1];
+      if (prev) { setActiveStory(prev); setProgress(0); setShowBlurOverlay(false); storyStartTime.current = Date.now(); }
+    }
+  };
+
+  const closeStory = () => { setActiveStory(null); setShowingVazados(false); setShowBlurOverlay(false); };
 
   return (
     <>
       {/* Stories bar */}
       <div className="container mx-auto px-4 py-4">
-        <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div className="flex gap-4 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {stories.map((story) => {
             const locked = story.isLocked && !isVip;
+            const isVazado = story.isVazado;
             return (
-              <div 
-                key={story.id} 
-                className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group"
-                onClick={() => handleStoryClick(story)}
-              >
+              <div key={story.id} className="flex flex-col items-center gap-1.5 shrink-0 cursor-pointer group relative"
+                onClick={() => handleStoryClick(story)}>
                 <div className={`relative w-[72px] h-[72px] rounded-full p-[3px] ${
-                  locked 
-                    ? 'bg-gradient-to-br from-zinc-600 to-zinc-800' 
-                    : story.isLocked && isVip
-                      ? 'bg-gradient-to-br from-amber-400 to-yellow-500'
+                  isVazado
+                    ? 'bg-gradient-to-br from-red-600 via-red-500 to-orange-500 shadow-[0_0_15px_rgba(220,38,38,0.4)]'
+                    : locked
+                      ? 'bg-gradient-to-br from-zinc-600 to-zinc-800'
                       : 'bg-gradient-to-br from-pink-500 via-red-500 to-yellow-500'
                 }`}>
                   <div className="w-full h-full rounded-full p-[2px] bg-zinc-950">
-                    <img 
-                      src={story.thumb} 
-                      alt={story.label}
-                      className={`w-full h-full rounded-full object-cover transition-all duration-300 group-hover:scale-105 ${locked ? 'blur-sm opacity-50' : 'opacity-90 group-hover:opacity-100'}`}
-                    />
+                    <img src={story.thumb} alt={story.label}
+                      className={`w-full h-full rounded-full object-cover transition-all duration-300 group-hover:scale-105 ${
+                        locked ? 'blur-sm opacity-50' : isVazado ? 'opacity-70' : 'opacity-90 group-hover:opacity-100'
+                      }`} />
                   </div>
                   {locked && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -106,15 +161,24 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
                       </div>
                     </div>
                   )}
-                  {story.isLocked && isVip && (
-                    <div className="absolute -top-0.5 -right-0.5">
-                      <Gem className="w-4 h-4 text-amber-400 drop-shadow-lg" />
+                  {isVazado && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-7 h-7 bg-red-600/90 rounded-full flex items-center justify-center border border-red-400/50 shadow-[0_0_10px_rgba(220,38,38,0.5)]">
+                        <AlertTriangle className="w-3.5 h-3.5 text-white" />
+                      </div>
                     </div>
                   )}
                 </div>
-                <span className={`text-[10px] font-bold truncate max-w-[72px] text-center ${locked ? 'text-zinc-600' : 'text-zinc-400'}`}>
-                  {story.label}
-                </span>
+                <span className={`text-[10px] font-bold truncate max-w-[72px] text-center ${
+                  isVazado ? 'text-red-500' : locked ? 'text-zinc-600' : 'text-zinc-400'
+                }`}>{story.label}</span>
+                {isVazado && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+                    <div className="w-4 h-4 bg-red-600 rounded-full flex items-center justify-center border-2 border-zinc-950 shadow-lg">
+                      <span className="text-white text-[8px] font-black">!</span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
@@ -124,50 +188,21 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
       {/* Full screen story viewer */}
       {activeStory && (
         <div className="fixed inset-0 z-[200] bg-black flex items-center justify-center animate-fade-in">
-          {/* Tap zones for navigation - Left (back) / Right (forward) */}
+          {/* Tap zones */}
           <div className="absolute inset-0 z-40 flex">
-            <div 
-              className="w-[30%] h-full" 
-              onClick={(e) => {
-                e.stopPropagation();
-                // Go to previous available story
-                const availableStories = stories.filter(s => !s.isLocked || isVip);
-                const currentIdx = availableStories.findIndex(s => s.id === activeStory.id);
-                if (currentIdx > 0) {
-                  setActiveStory(availableStories[currentIdx - 1]);
-                  setProgress(0);
-                }
-              }}
-            />
-            <div 
-              className="w-[70%] h-full" 
-              onClick={(e) => {
-                e.stopPropagation();
-                // Go to next available story
-                const availableStories = stories.filter(s => !s.isLocked || isVip);
-                const currentIdx = availableStories.findIndex(s => s.id === activeStory.id);
-                if (currentIdx < availableStories.length - 1) {
-                  setActiveStory(availableStories[currentIdx + 1]);
-                  setProgress(0);
-                } else {
-                  setActiveStory(null); // Close when reaching the end
-                }
-              }}
-            />
+            <div className="w-[30%] h-full" onClick={(e) => { e.stopPropagation(); navigateStory('prev'); }} />
+            <div className="w-[70%] h-full" onClick={(e) => { e.stopPropagation(); navigateStory('next'); }} />
           </div>
 
           {/* Progress bars */}
           <div className="absolute top-4 left-4 right-4 flex gap-1 z-50">
-            {stories.filter(s => !s.isLocked || isVip).map((story, idx) => {
-              const activeIdx = stories.filter(s => !s.isLocked || isVip).findIndex(s => s.id === activeStory.id);
+            {(showingVazados ? vazadosStories : stories.filter(s => !s.isVazado && (!s.isLocked || isVip))).map((story, idx) => {
+              const currentList = showingVazados ? vazadosStories : stories.filter(s => !s.isVazado && (!s.isLocked || isVip));
+              const activeIdx = currentList.findIndex(s => s.id === activeStory.id);
               return (
                 <div key={story.id} className="flex-1 h-[3px] bg-white/20 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-white rounded-full transition-all duration-100"
-                    style={{ 
-                      width: idx < activeIdx ? '100%' : idx === activeIdx ? `${progress}%` : '0%'
-                    }}
-                  />
+                  <div className="h-full bg-white rounded-full transition-all duration-100"
+                    style={{ width: idx < activeIdx ? '100%' : idx === activeIdx ? `${progress}%` : '0%' }} />
                 </div>
               );
             })}
@@ -176,44 +211,72 @@ const Stories: React.FC<StoriesProps> = ({ isVip, onOpenSubscription }) => {
           {/* Header */}
           <div className="absolute top-8 left-4 right-4 flex items-center justify-between z-50">
             <div className="flex items-center gap-3">
-              <img src="https://secreto.meuprivacy.digital/acesso/foto22.jpg" className="w-9 h-9 rounded-full border-2 border-white/20 object-cover" alt="Sofia" />
+              {showingVazados ? (
+                <div className="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center border-2 border-white/20">
+                  <ShieldAlert className="w-5 h-5 text-white" />
+                </div>
+              ) : (
+                <img src="https://secreto.meuprivacy.digital/nataliexking/foto1.webp" className="w-9 h-9 rounded-full border-2 border-white/20 object-cover" alt="Sofia" />
+              )}
               <div>
-                <p className="text-white text-sm font-bold">Sofia Oliveira</p>
-                <p className="text-white/50 text-[10px] font-medium">Agora</p>
+                <p className="text-white text-sm font-bold">{showingVazados ? '⚠️ VAZADOS' : 'Sofia Oliveira'}</p>
+                <p className="text-white/50 text-[10px] font-medium">{showingVazados ? 'Conteúdo restrito' : 'Agora'}</p>
               </div>
             </div>
-            <button onClick={(e) => { e.stopPropagation(); setActiveStory(null); }} className="p-2 text-white/70 hover:text-white z-50">
+            <button onClick={(e) => { e.stopPropagation(); closeStory(); }} className="p-2 text-white/70 hover:text-white z-50">
               <X size={24} />
             </button>
           </div>
 
-          {/* Media */}
-          {activeStory.isVideo ? (
-            <video 
-              src={activeStory.mediaUrl} 
-              autoPlay 
-              playsInline 
-              muted
-              className="w-full h-full object-contain"
-              controlsList="nodownload"
-            />
-          ) : (
-            <img 
-              src={activeStory.mediaUrl} 
-              alt="Story" 
-              className="w-full h-full object-contain"
-            />
+          {/* Vazados title overlay */}
+          {showingVazados && activeStory.title && (
+            <div className="absolute top-20 left-4 right-4 z-50">
+              <div className="bg-red-600/90 backdrop-blur-sm px-4 py-3 rounded-xl border border-red-400/30">
+                <p className="text-white text-xs font-black uppercase leading-snug">{activeStory.title}</p>
+              </div>
+            </div>
           )}
 
-          {/* Gradient overlays */}
+          {/* Media */}
+          {activeStory.isVideo ? (
+            <video ref={videoRef} src={activeStory.mediaUrl} autoPlay playsInline muted
+              className={`w-full h-full object-contain transition-all duration-700 ${showBlurOverlay ? 'blur-[20px]' : ''}`}
+              controlsList="nodownload" />
+          ) : (
+            <img src={activeStory.mediaUrl} alt="Story"
+              className={`w-full h-full object-contain transition-all duration-700 ${showBlurOverlay ? 'blur-[20px]' : ''}`} />
+          )}
+
+          {/* Gradients */}
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none"></div>
 
-          {/* VIP badge if unlocked */}
-          {activeStory.isLocked && isVip && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 bg-amber-500/20 border border-amber-500/40 px-4 py-2 rounded-full flex items-center gap-2 backdrop-blur-md">
-              <Gem className="w-4 h-4 text-amber-400" />
-              <span className="text-amber-400 text-xs font-black uppercase">Conteúdo VIP</span>
+          {/* Blur overlay with age verification CTA */}
+          {showBlurOverlay && !isAgeVerified && (
+            <div className="absolute inset-0 z-[45] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
+              <div className="bg-zinc-900/95 border border-blue-500/30 rounded-2xl p-6 mx-4 max-w-sm text-center shadow-2xl">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center border-2 border-blue-500/30">
+                  <ShieldAlert className="w-8 h-8 text-blue-400" />
+                </div>
+                <h3 className="text-white font-black text-lg uppercase mb-2">Verificação Necessária</h3>
+                <p className="text-zinc-400 text-sm mb-4">
+                  {showingVazados
+                    ? 'Para continuar assistindo os vazados, confirme que você é maior de idade.'
+                    : 'Para ver mais conteúdos, precisamos confirmar sua idade.'}
+                </p>
+                <button onClick={(e) => { e.stopPropagation(); closeStory(); onRequestAgeVerification(); }}
+                  className="w-full py-3.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-black uppercase text-sm rounded-xl shadow-lg active:scale-[0.97] transition-transform z-50 relative">
+                  🔐 VERIFICAR MINHA IDADE
+                </button>
+                <p className="text-zinc-500 text-[10px] mt-3 font-bold">Valor devolvido em desconto nos conteúdos</p>
+              </div>
+            </div>
+          )}
+
+          {/* Age verification hint at bottom (before blur) */}
+          {!isAgeVerified && !showBlurOverlay && (
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 bg-blue-500/20 border border-blue-500/40 px-4 py-2 rounded-full flex items-center gap-2 backdrop-blur-md">
+              <span className="text-blue-400 text-xs font-black uppercase">🔐 Verificação de idade necessária</span>
             </div>
           )}
         </div>

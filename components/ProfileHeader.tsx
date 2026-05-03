@@ -13,10 +13,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
     <div className="relative mb-2">
       <div className="absolute top-4 right-4 z-30">
         {isVip ? (
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-yellow-200 bg-gradient-to-r from-amber-300 to-yellow-500 text-black shadow-xl">
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-pink-200 bg-gradient-to-r from-pink-400 to-rose-500 text-white shadow-xl">
               <span className="text-[10px] uppercase font-bold tracking-wider">Status:</span>
-              <span className="text-xs font-black uppercase">MEMBRO VIP</span>
-              <Gem className="w-3 h-3 text-black fill-black" />
+              <span className="text-xs font-black uppercase">SEGREDINHO 😈</span>
+              <Gem className="w-3 h-3 text-white fill-white" />
           </div>
         ) : (
           <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-zinc-700 bg-zinc-900/80 backdrop-blur-md text-white shadow-xl">
@@ -87,12 +87,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
 
             <div className="mt-6 md:mt-0">
                {isVip ? (
-                 <div className="bg-[#1a140a] border border-[#d97706]/40 rounded-[1.5rem] px-6 py-4 flex items-center gap-4 shadow-2xl">
-                     <div className="w-12 h-12 rounded-full bg-[#f59e0b] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(245,158,11,0.3)]">
-                         <Gem className="text-black w-6 h-6 fill-black" />
+                 <div className="bg-[#1a0a14] border border-[#ec4899]/40 rounded-[1.5rem] px-6 py-4 flex items-center gap-4 shadow-2xl">
+                     <div className="w-12 h-12 rounded-full bg-[#ec4899] flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+                         <Gem className="text-white w-6 h-6 fill-white" />
                      </div>
                      <div className="text-left">
-                         <p className="text-[#f59e0b] font-black text-sm md:text-base uppercase tracking-tight">MEMBRO VIP ATIVO</p>
+                         <p className="text-[#ec4899] font-black text-sm md:text-base uppercase tracking-tight">SEGREDINHO DESBLOQUEADO 😈</p>
                          <p className="text-zinc-400 text-xs md:text-sm font-medium">Você tem acesso a tudo!</p>
                      </div>
                  </div>
@@ -100,11 +100,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                  <div className="flex flex-col items-center md:items-end gap-3">
                    <button 
                      onClick={onPurchase}
-                     className="bg-amber-500 hover:bg-amber-400 text-black font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+                     className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
                    >
-                     Desbloquear VIP <Lock size={18} />
+                     😈 Desbloquear VIP <Gem size={18} className="fill-white" />
                    </button>
-                   <span className="text-xs text-zinc-400 font-medium">✨ Por apenas R$ 6,90</span>
+                   <span className="text-xs text-zinc-400 font-medium">✨ Acesso Vitalício — R$ 16,90</span>
                  </div>
                )}
             </div>
