@@ -723,11 +723,11 @@ const App: React.FC = () => {
       {/* Ao Vivo - Top Banner */}
       <div className="container mx-auto px-4 pt-4">
         <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-xl cursor-pointer"
-          onClick={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)}>
+          onClick={() => setShowPaymentModal(true)}>
           <div className="relative h-32 w-full overflow-hidden">
             <video src="https://secreto.meuprivacy.digital/nataliexking/video10.mp4"
               autoPlay muted loop playsInline
-              className={`w-full h-full object-cover ${!isAgeVerified ? 'blur-[12px]' : !isVip ? 'blur-[6px]' : ''}`} />
+              className={`w-full h-full object-cover ${!isVip ? 'blur-[6px]' : ''}`} />
             <div className="absolute inset-0 bg-gradient-to-r from-zinc-950/80 via-zinc-950/40 to-transparent"></div>
             <div className="absolute top-3 left-3 flex items-center gap-2">
               <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>
@@ -739,10 +739,10 @@ const App: React.FC = () => {
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-center">
                 <p className="text-white font-black text-sm uppercase tracking-tight mb-2">
-                  {!isAgeVerified ? '🔐 Verifique sua idade para assistir' : '😈 Conteúdo VIP — Acesso Vitalício'}
+                  😈 Conteúdo VIP — Acesso Vitalício
                 </p>
-                <div className={`${!isAgeVerified ? 'bg-blue-500/80' : 'bg-pink-500/80'} text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block`}>
-                  {!isAgeVerified ? '🔐 VERIFICAR IDADE' : `ASSISTIR — ${vipDisplayPrice}`}
+                <div className="bg-pink-500/80 text-white text-[10px] font-black uppercase px-4 py-1.5 rounded-full inline-block">
+                  ASSISTIR — {vipDisplayPrice}
                 </div>
               </div>
             </div>

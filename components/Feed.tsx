@@ -88,10 +88,11 @@ const VazadosCard: React.FC<{ onOpen: () => void; onOpenVip: () => void; vipPric
 const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onRequestAgeVerification, isVip, isAgeVerified }) => {
   const [showCommentPrompt, setShowCommentPrompt] = useState<number | null>(null);
 
-  const discount = isAgeVerified ? 4.90 : 0;
-  const lockMessage = isAgeVerified ? undefined : '🔒 Verificação de idade necessária';
-  const vipPrice = isAgeVerified ? `R$ ${(9.90 - discount).toFixed(2).replace('.',',')}` : '';
-  const onLockClick = isAgeVerified ? onOpenSubscription : onRequestAgeVerification;
+  // During free period: most content unlocked, show WhatsApp CTA
+  // After free period: show VIP price R$16.90
+  const vipPrice = 'R$ 16,90';
+  const lockMessage = !isAgeVerified ? '💬 Compre no WhatsApp' : undefined;
+  const onLockClick = !isAgeVerified ? () => { window.open('https://wa.me/', '_blank'); } : onOpenSubscription;
 
   const getBlurLevel = (lockedIdx: number): number => {
     const map: Record<number, number> = { 0: 4, 1: 6, 2: 10, 3: 14, 4: 18, 5: 22 };
@@ -147,7 +148,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
       text: sofiaCaptions[(i - 1) % sofiaCaptions.length],
       mediaUrl: `${BASE_NEW}/foto${i}.webp`, isVideo: false,
       likes: `${(Math.random() * 30 + 2).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 800 + 100)}`,
-      isLocked: i % 5 !== 0 && i % 3 !== 0, // ~60% locked
+      isLocked: !isAgeVerified ? (i % 10 === 0) : (i % 5 !== 0 && i % 3 !== 0), // Free: ~10% locked, Paid: ~60% locked
     });
   }
 
@@ -159,7 +160,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
       text: sofiaCaptions[(i + 5) % sofiaCaptions.length],
       mediaUrl: videoUrl, isVideo: true,
       likes: `${(Math.random() * 40 + 5).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1500 + 200)}`,
-      isLocked: i % 4 !== 0, // ~75% locked
+      isLocked: !isAgeVerified ? (i % 5 === 0) : (i % 4 !== 0), // Free: ~20% locked, Paid: ~75% locked
     });
   }
 
@@ -170,7 +171,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
       text: elleCaptions[(i - 1) % elleCaptions.length],
       mediaUrl: `${BASE_OLD}/foto${i}.jpg`, isVideo: false,
       likes: `${(Math.random() * 20 + 1).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 600 + 80)}`,
-      isLocked: i % 10 !== 0 && i % 7 !== 0, // ~70% locked
+      isLocked: !isAgeVerified ? (i % 3 !== 0 && i % 5 !== 0) : (i % 10 !== 0 && i % 7 !== 0), // Free: ~50% locked, Paid: ~70% locked
     });
   }
 
@@ -181,7 +182,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
       text: elleCaptions[(i + 3) % elleCaptions.length],
       mediaUrl: `${BASE_OLD}/video${i}.mp4`, isVideo: true,
       likes: `${(Math.random() * 25 + 3).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1000 + 150)}`,
-      isLocked: i % 5 !== 0, // ~80% locked
+      isLocked: !isAgeVerified ? (i % 3 !== 0) : (i % 5 !== 0), // Free: ~67% locked, Paid: ~80% locked
     });
   }
 

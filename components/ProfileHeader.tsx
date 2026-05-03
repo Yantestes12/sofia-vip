@@ -100,11 +100,11 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                  <div className="flex flex-col items-center md:items-end gap-3">
                    <button 
                      onClick={onPurchase}
-                     className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-400 hover:to-blue-500 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+                     className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white font-black uppercase tracking-widest px-8 py-4 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
                    >
-                     🔐 Verificar Idade <Lock size={18} />
+                     😈 Desbloquear VIP <Gem size={18} className="fill-white" />
                    </button>
-                   <span className="text-xs text-zinc-400 font-medium">🔒 Necessário para desbloquear conteúdos</span>
+                   <span className="text-xs text-zinc-400 font-medium">✨ Acesso Vitalício — R$ 16,90</span>
                  </div>
                )}
             </div>

@@ -21,7 +21,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
   // Preço VIP Vitalício R$16,90
-  const currentPrice = 16.90;
+  const basePrice = 16.90;
+  const discount = 0;
+  const currentPrice = basePrice - discount;
 
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
