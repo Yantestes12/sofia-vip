@@ -685,10 +685,7 @@ const App: React.FC = () => {
     socials: { instagram: "#", telegram: "#", twitter: "#" }
   };
 
-  // Welcome flow: mostra antes de tudo
-  if (showWelcome && !directAccessId && !showLeakPortal) {
-    return <WelcomeFlow onComplete={() => setShowWelcome(false)} />;
-  }
+  // Welcome popup: rendered as overlay inside main JSX (not blocking)
 
   if (directAccessId) {
     return <SubmundoVazado accessId={directAccessId} onBack={() => {
@@ -714,10 +711,13 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-200 pb-24 relative select-none">
+      {/* Welcome popup overlay */}
+      {showWelcome && <WelcomeFlow onComplete={() => setShowWelcome(false)} />}
+
       <ProfileHeader 
         profile={profileData} 
         isVip={isVip}
-        onPurchase={() => isAgeVerified ? setShowPaymentModal(true) : setShowAgeModal(true)}
+        onPurchase={() => setShowPaymentModal(true)}
       />
 
       {/* Ao Vivo - Top Banner */}
