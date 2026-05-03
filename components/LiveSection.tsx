@@ -106,7 +106,7 @@ const LiveSection: React.FC<LiveSectionProps> = ({ isVip, onOpenSubscription }) 
               className="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-400 hover:to-rose-400 text-white py-4 rounded-xl font-black uppercase text-sm transition-all hover:scale-[1.02] active:scale-[0.98] shadow-[0_0_30px_rgba(236,72,153,0.3)] flex justify-center items-center gap-3"
             >
               <Gem size={18} className="fill-white" />
-              DESBLOQUEAR — R$ 9,90
+              DESBLOQUEAR — R$ 16,90
             </button>
             
             <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mt-3">

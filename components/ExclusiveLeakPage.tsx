@@ -292,9 +292,9 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
   const [isProcessing, setIsProcessing] = useState(false);
   const [timeLeft, setTimeLeft] = useState(12 * 60 + 45);
 
-  // Timer de promoção Vazados: R$14,49 fixo
+  // Timer de promoção Vazados: R$14,71 fixo
   const [promoSecondsLeft, setPromoSecondsLeft] = useState(0);
-  const [currentPrice, setCurrentPrice] = useState(14.49);
+  const [currentPrice, setCurrentPrice] = useState(14.71);
 
   useEffect(() => {
     const stored = localStorage.getItem(VAZADOS_PROMO_KEY);
@@ -317,7 +317,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
       } else {
         setPromoSecondsLeft(0);
       }
-      setCurrentPrice(14.49);
+      setCurrentPrice(14.71);
     };
 
     updatePromo();
@@ -461,7 +461,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <span className="text-zinc-400 text-xs line-through">R$ 89,00</span>
-                  <span className="text-green-400 font-black text-lg">R$ 14,49</span>
+                  <span className="text-green-400 font-black text-lg">R$ 14,71</span>
                 </div>
                 <p className="text-green-300/60 text-[9px] mt-1 font-bold">Promoção por tempo limitado — garanta agora!</p>
               </div>
@@ -471,7 +471,7 @@ const ExclusiveLeakPage: React.FC<ExclusiveLeakPageProps> = ({ onBack, leadLocat
                   <AlertTriangle size={14} className="text-red-400" />
                   <span className="text-red-400 text-[10px] font-black uppercase tracking-widest">PROMOÇÃO ENCERRADA</span>
                 </div>
-                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 14,49 expirou</p>
+                <p className="text-zinc-500 text-[10px]">O valor promocional de R$ 14,71 expirou</p>
               </div>
             )}
 

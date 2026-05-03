@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Lock, CheckCircle2, ShieldAlert, Timer, Copy, Gem, AlertTriangle } from './Icons';
 
-import { getDiscount } from './AgeVerificationModal';
 
 const PROMO_STORAGE_KEY = 'sofia_promo_start';
 
@@ -11,7 +10,6 @@ interface PaymentModalProps {
   onSuccess: () => void;
   onOpenVazados?: () => void;
   leadLocation?: string;
-  isAgeVerified?: boolean;
 }
 
 const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess, onOpenVazados, leadLocation }) => {
@@ -22,10 +20,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
   const [copied, setCopied] = useState(false);
   const [onlineCount] = useState(() => Math.floor(Math.random() * 60 + 80));
   
-  // Preço base R$9,90 com desconto de verificação de idade
-  const discount = getDiscount();
-  const basePrice = 9.90;
-  const currentPrice = Math.max(basePrice - discount, 1.00);
+  // Preço VIP Vitalício R$16,90
+  const currentPrice = 16.90;
 
   const API_KEY = "nxp_live_bba943703263271e69dbbec5a94d8a3f9cb2a7ddc10ab4f7b817145a0b3c32a3";
 
@@ -466,7 +462,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
                 <div className="bg-black/40 rounded-xl p-4 border border-red-500/20">
                   <div className="flex items-center justify-center gap-3 mb-1">
                     <span className="text-zinc-500 line-through text-lg">R$ 89,00</span>
-                    <span className="text-red-500 font-black text-3xl">R$ 14,49</span>
+                    <span className="text-red-500 font-black text-3xl">R$ 14,71</span>
                   </div>
                   <p className="text-zinc-500 text-[9px] font-bold uppercase">Desconto exclusivo só pra quem desbloqueou o Segredinho</p>
                 </div>
@@ -481,7 +477,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ isOpen, onClose, onSuccess,
               }}
               className="w-full py-4 px-6 bg-red-600 hover:bg-red-500 text-white font-black uppercase tracking-wider rounded-xl shadow-[0_0_30px_rgba(220,38,38,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 mb-3"
             >
-              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 14,49
+              <ShieldAlert className="w-5 h-5" /> LIBERAR SUBMUNDO — R$ 14,71
             </button>
 
             {/* Botão pular */}
