@@ -5,10 +5,11 @@ import { MapPin, BadgeCheck, Gem, Lock } from './Icons';
 interface ProfileHeaderProps {
   profile: CreatorProfile;
   isVip: boolean;
+  isFreePeriod?: boolean;
   onPurchase: () => void;
 }
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchase }) => {
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, isFreePeriod, onPurchase }) => {
   return (
     <div className="relative mb-2">
       <div className="absolute top-4 right-4 z-30">
@@ -96,7 +97,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                          <p className="text-zinc-400 text-xs md:text-sm font-medium">Você tem acesso a tudo!</p>
                      </div>
                  </div>
-               ) : (
+               ) : !isFreePeriod ? (
                  <div className="flex flex-col items-center md:items-end gap-3">
                    <button 
                      onClick={onPurchase}
@@ -106,7 +107,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ profile, isVip, onPurchas
                    </button>
                    <span className="text-xs text-zinc-400 font-medium">✨ Acesso Vitalício — R$ 16,90</span>
                  </div>
-               )}
+               ) : null}
             </div>
           </div>
         </div>
