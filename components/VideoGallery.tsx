@@ -466,10 +466,49 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
     );
   };
 
-  if (!initialized) return null;
+  if (!initialized || sofiaReady < 3) {
+    return (
+      <div className="space-y-5 py-12 flex flex-col items-center justify-center gap-6">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 via-pink-500 to-rose-500 p-[3px]" style={{ animation: 'vgSpin 2s linear infinite' }}>
+            <div className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center">
+              <span className="text-2xl">🎬</span>
+            </div>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-zinc-400 text-sm font-bold uppercase tracking-widest">Carregando vídeos</p>
+          <p className="text-zinc-600 text-[10px] uppercase tracking-[3px] mt-2">preparando previews...</p>
+        </div>
+        <div className="w-48 h-1 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-amber-400 to-pink-500" style={{ animation: 'vgBar 2s ease-in-out infinite' }} />
+        </div>
+        {/* Skeleton grid */}
+        <div className="w-full grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="aspect-video bg-zinc-800 animate-pulse relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/20 to-transparent" style={{ animation: 'vgShimmer 1.5s infinite' }} />
+              </div>
+              <div className="p-3 space-y-2">
+                <div className="h-3 bg-zinc-800 rounded w-3/4 animate-pulse" />
+                <div className="h-2 bg-zinc-800/60 rounded w-1/2 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+        <style>{`
+          @keyframes vgSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes vgBar { 0% { width: 0%; } 50% { width: 80%; } 100% { width: 100%; } }
+          @keyframes vgShimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-5 animate-fade-in">
+    <div className="space-y-5 animate-fade-in" style={{ animation: 'vgReveal 0.6s ease-out' }}>
+      <style>{`@keyframes vgReveal { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {/* Sofia section */}
       <div className="flex items-center justify-between px-4 py-3 bg-zinc-900/50 rounded-2xl border border-zinc-800">
         <h3 className="text-white text-lg font-black uppercase tracking-tighter flex items-center gap-2">

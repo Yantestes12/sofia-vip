@@ -93,9 +93,41 @@ const VazadosCard: React.FC<{ onOpen: () => void; onOpenVip: () => void; vipPric
   );
 };
 
+// ====== LAZY IMAGE ======
+const LazyMedia: React.FC<{ src: string; isVideo: boolean; className?: string; style?: React.CSSProperties; alt?: string; videoProps?: any }> = ({ src, isVideo, className, style, alt, videoProps }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <>
+      {!loaded && (
+        <div className="absolute inset-0 bg-zinc-800 animate-pulse">
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/30 to-transparent" style={{ animation: 'shimmer 1.5s infinite' }} />
+        </div>
+      )}
+      {isVideo ? (
+        <video src={src} className={className} style={{ ...style, opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }} onLoadedData={() => setLoaded(true)} {...videoProps} />
+      ) : (
+        <img src={src} className={className} style={{ ...style, opacity: loaded ? 1 : 0, transition: 'opacity 0.5s ease' }} alt={alt || ''} onLoad={() => setLoaded(true)} />
+      )}
+      <style>{`@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }`}</style>
+    </>
+  );
+};
+
 // ====== MAIN FEED ======
 const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onRequestAgeVerification, isVip, isAgeVerified }) => {
   const [showCommentPrompt, setShowCommentPrompt] = useState<number | null>(null);
+  const [feedReady, setFeedReady] = useState(false);
+
+  // Preload first 6 images before showing feed
+  useEffect(() => {
+    const BASE = 'https://secreto.meuprivacy.digital/nataliexking';
+    const preloadUrls = Array.from({ length: 6 }, (_, i) => `${BASE}/foto${i + 1}.webp`);
+    let loaded = 0;
+    const check = () => { loaded++; if (loaded >= preloadUrls.length) setFeedReady(true); };
+    const timeout = setTimeout(() => setFeedReady(true), 5000); // fallback 5s
+    preloadUrls.forEach(url => { const img = new Image(); img.onload = check; img.onerror = check; img.src = url; });
+    return () => clearTimeout(timeout);
+  }, []);
 
   // During free period: most content unlocked, show WhatsApp CTA
   // After free period: show VIP price R$16.90
@@ -161,7 +193,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     });
   }
 
-  // Sofia Oliveira videos (16 videos, ~75% locked)
+  // Sofia Oliveira videos (16 videos — ALL locked in feed, they're heavy to load)
   for (let i = 0; i <= 15; i++) {
     const videoUrl = i === 0 ? `${BASE_NEW}/video.mp4` : `${BASE_NEW}/video${i}.mp4`;
     allPosts.push({
@@ -169,7 +201,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
       text: sofiaCaptions[(i + 5) % sofiaCaptions.length],
       mediaUrl: videoUrl, isVideo: true,
       likes: `${(Math.random() * 40 + 5).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1500 + 200)}`,
-      isLocked: !isAgeVerified ? (i % 5 === 0) : (i % 4 !== 0), // Free: ~20% locked, Paid: ~75% locked
+      isLocked: true, // Always locked in feed — videos are heavy, send to VIP or WhatsApp
     });
   }
 
@@ -184,27 +216,29 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     });
   }
 
-  // Sofia Elle videos (old model, 15 videos, ~80% locked)
+  // Sofia Elle videos (old model, 15 videos — ALL locked in feed)
   for (let i = 1; i <= 15; i++) {
     allPosts.push({
       id: postId++, creator: 'elle', name: 'Camila Elle', avatar: AVATAR_ELLE,
       text: elleCaptions[(i + 3) % elleCaptions.length],
       mediaUrl: `${BASE_OLD}/video${i}.mp4`, isVideo: true,
       likes: `${(Math.random() * 25 + 3).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1000 + 150)}`,
-      isLocked: !isAgeVerified ? (i % 3 !== 0) : (i % 5 !== 0), // Free: ~67% locked, Paid: ~80% locked
+      isLocked: true, // Always locked in feed
     });
   }
 
-  // Interleave: Sofia first, then friend section, then mixed
-  const sofiaPosts = allPosts.filter(p => p.creator === 'sofia');
-  const ellePosts = allPosts.filter(p => p.creator === 'elle');
+  // Separate by type: photos first, then videos
+  const sofiaPhotos = allPosts.filter(p => p.creator === 'sofia' && !p.isVideo);
+  const sofiaVideos = allPosts.filter(p => p.creator === 'sofia' && p.isVideo);
+  const ellePhotos = allPosts.filter(p => p.creator === 'elle' && !p.isVideo);
+  const elleVideos = allPosts.filter(p => p.creator === 'elle' && p.isVideo);
 
-  // Shuffle within each group for variety
   const shuffle = (arr: any[]) => arr.sort(() => Math.random() - 0.5);
-  const shuffledSofia = shuffle([...sofiaPosts]);
-  const shuffledElle = shuffle([...ellePosts]);
+  // Photos first, then videos
+  const shuffledSofia = [...shuffle([...sofiaPhotos]), ...shuffle([...sofiaVideos])];
+  const shuffledElle = [...shuffle([...ellePhotos]), ...shuffle([...elleVideos])];
 
-  // Build final feed: during free period hide friend content, after show everything
+  // Build final feed: photos first, during free period hide friend content
   const posts: any[] = isAgeVerified
     ? [
         ...shuffledSofia.slice(0, 6),
@@ -239,8 +273,52 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
   let sofiaLockedCount = 0;
   let elleLockedCount = 0;
 
+  // Feed loading screen
+  if (!feedReady) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 flex flex-col items-center justify-center gap-6 animate-pulse">
+        <div className="relative">
+          <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 p-[3px]" style={{ animation: 'spin 2s linear infinite' }}>
+            <div className="w-full h-full rounded-full bg-zinc-950 flex items-center justify-center">
+              <span className="text-3xl">🔥</span>
+            </div>
+          </div>
+        </div>
+        <div className="text-center">
+          <p className="text-zinc-400 text-sm font-bold uppercase tracking-widest">Carregando conteúdos</p>
+          <p className="text-zinc-600 text-[10px] uppercase tracking-[3px] mt-2">preparando tudo pra você...</p>
+        </div>
+        <div className="w-48 h-1 bg-zinc-800 rounded-full overflow-hidden">
+          <div className="h-full rounded-full bg-gradient-to-r from-pink-500 to-amber-400" style={{ animation: 'loadBar 2s ease-in-out infinite' }} />
+        </div>
+        {/* Skeleton cards */}
+        <div className="w-full space-y-6 mt-4">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="p-4 flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-zinc-800 animate-pulse" />
+                <div className="space-y-2 flex-1"><div className="h-3 bg-zinc-800 rounded w-28 animate-pulse" /><div className="h-2 bg-zinc-800/60 rounded w-16 animate-pulse" /></div>
+              </div>
+              <div className="px-5 mb-3"><div className="h-3 bg-zinc-800/50 rounded w-3/4 animate-pulse" /></div>
+              <div className="aspect-[4/3] bg-zinc-800 animate-pulse relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-zinc-700/20 to-transparent" style={{ animation: 'shimmer 1.5s infinite' }} />
+              </div>
+              <div className="p-4 flex gap-6"><div className="h-3 bg-zinc-800 rounded w-16 animate-pulse" /><div className="h-3 bg-zinc-800 rounded w-16 animate-pulse" /></div>
+            </div>
+          ))}
+        </div>
+        <style>{`
+          @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+          @keyframes loadBar { 0% { width: 0%; } 50% { width: 80%; } 100% { width: 100%; } }
+          @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8 pb-12">
+    <div className="max-w-2xl mx-auto space-y-8 pb-12" style={{ animation: 'feedReveal 0.6s ease-out' }}>
+      <style>{`@keyframes feedReveal { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }`}</style>
       {feedItems.map((item, idx) => {
         if (item.type === 'vazados') {
           return <VazadosCard key="vazados" onOpen={onOpenVazados} onOpenVip={onOpenSubscription} vipPrice={`DESBLOQUEAR — ${vipPrice}`} isFreePeriod={!isAgeVerified} />;
@@ -303,7 +381,7 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
                     <VideoPreview src={post.mediaUrl} blurLevel={getBlurLevel(currentLockedIdx)} onUnlock={onLockClick} likes={post.likes} vipPrice={lockMessage || `DESBLOQUEAR — ${vipPrice}`} />
                   ) : (
                     <>
-                      <img src={post.mediaUrl} className="absolute inset-0 w-full h-full object-cover" style={{ filter: `blur(${getBlurLevel(currentLockedIdx)}px)` }} alt="" />
+                      <LazyMedia src={post.mediaUrl} isVideo={false} className="absolute inset-0 w-full h-full object-cover" style={{ filter: `blur(${getBlurLevel(currentLockedIdx)}px)` }} />
                       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/60 via-transparent to-transparent"></div>
                       {getBlurLevel(currentLockedIdx) >= 8 && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
@@ -321,9 +399,9 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
               ) : (
                 <div className="relative w-full bg-black flex items-center justify-center min-h-[300px]">
                   {post.isVideo ? (
-                    <video src={post.mediaUrl} controls className="w-full max-h-[700px] object-contain" playsInline controlsList="nodownload" />
+                    <LazyMedia src={post.mediaUrl} isVideo={true} className="w-full max-h-[700px] object-contain" videoProps={{ controls: true, playsInline: true, controlsList: 'nodownload' }} />
                   ) : (
-                    <img src={post.mediaUrl} className="w-full h-auto max-h-[800px] object-contain" alt="" />
+                    <LazyMedia src={post.mediaUrl} isVideo={false} className="w-full h-auto max-h-[800px] object-contain" />
                   )}
                 </div>
               )}
