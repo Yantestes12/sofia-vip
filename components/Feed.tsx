@@ -204,15 +204,21 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
   const shuffledSofia = shuffle([...sofiaPosts]);
   const shuffledElle = shuffle([...ellePosts]);
 
-  // Build final feed: 6 Sofia → Vazados → 4 Sofia → Friend separator → All Elle → Rest Sofia
-  const posts: any[] = [
-    ...shuffledSofia.slice(0, 6),
-    { id: 'vazados', type: 'vazados' } as any,
-    ...shuffledSofia.slice(6, 10),
-    { id: 'friend-separator', type: 'separator' } as any,
-    ...shuffledElle,
-    ...shuffledSofia.slice(10),
-  ];
+  // Build final feed: during free period hide friend content, after show everything
+  const posts: any[] = isAgeVerified
+    ? [
+        ...shuffledSofia.slice(0, 6),
+        { id: 'vazados', type: 'vazados' } as any,
+        ...shuffledSofia.slice(6, 10),
+        { id: 'friend-separator', type: 'separator' } as any,
+        ...shuffledElle,
+        ...shuffledSofia.slice(10),
+      ]
+    : [
+        ...shuffledSofia.slice(0, 6),
+        { id: 'vazados', type: 'vazados' } as any,
+        ...shuffledSofia.slice(6),
+      ];
 
   const handleCommentClick = (postId: number) => {
     if (!isAgeVerified) {

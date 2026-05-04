@@ -312,6 +312,11 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
   const [initialized, setInitialized] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
 
+  // How many videos are free per creator
+  // Free period: more free (but long ones still locked via sort). After: fewer free.
+  const SOFIA_FREE = isFreePeriod ? 4 : 3;
+  const CAMILA_FREE = isFreePeriod ? 3 : 2;
+
   useEffect(() => {
     const sofiaList: VideoMeta[] = Array.from({ length: 16 }, (_, i) => ({
       id: i,
@@ -319,7 +324,7 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
       url: `https://secreto.meuprivacy.digital/nataliexking/${i === 0 ? 'video' : `video${i}`}.mp4`,
       duration: 0, durationLabel: '',
       views: VIEWS[i],
-      locked: isFreePeriod ? (i >= 12) : (i >= 4),
+      locked: false, // will be set dynamically after sort
       creator: 'sofia' as const,
       ready: false, failed: false, thumbCanvas: null, preloaded: false,
     }));
@@ -330,7 +335,7 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
       url: `https://secreto.meuprivacy.digital/acesso/video${i + 1}.mp4`,
       duration: 0, durationLabel: '',
       views: VIEWS[16 + i] || VIEWS[i],
-      locked: isFreePeriod ? (i >= 6) : (i >= 3),
+      locked: false, // will be set dynamically after sort
       creator: 'camila' as const,
       ready: false, failed: false, thumbCanvas: null, preloaded: false,
     }));
@@ -381,17 +386,19 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
     window.open('https://wa.me/', '_blank');
   };
 
-  // Sort: ready sorted by duration (shortest first), then unready
-  const sortByDuration = (list: VideoMeta[]) => {
+  // Sort by duration (shortest first), then apply lock based on position
+  const sortAndLock = (list: VideoMeta[], freeCount: number): VideoMeta[] => {
     const working = list.filter(v => !v.failed);
     const ready = working.filter(v => v.ready && v.duration > 0);
     const notReady = working.filter(v => !v.ready || v.duration === 0);
     ready.sort((a, b) => a.duration - b.duration);
-    return [...ready, ...notReady];
+    // Shortest videos are free, rest are locked
+    const sorted = [...ready, ...notReady];
+    return sorted.map((v, idx) => ({ ...v, locked: idx >= freeCount }));
   };
 
-  const sofiaVideos = sortByDuration(videos.filter(v => v.creator === 'sofia'));
-  const camilaVideos = sortByDuration(videos.filter(v => v.creator === 'camila'));
+  const sofiaVideos = sortAndLock(videos.filter(v => v.creator === 'sofia'), SOFIA_FREE);
+  const camilaVideos = sortAndLock(videos.filter(v => v.creator === 'camila'), CAMILA_FREE);
 
   // Playable playlist for navigation (unlocked + ready)
   const playableVideos = [...sofiaVideos, ...camilaVideos].filter(v => !v.locked && v.ready && !v.failed);
