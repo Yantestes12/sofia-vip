@@ -603,9 +603,22 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('feed');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Splash screen: 4s loading to preload content
+  // Splash screen: 7s to preload everything
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 4000);
+    // Preload first 6 photos
+    const BASE = 'https://secreto.meuprivacy.digital/nataliexking';
+    for (let i = 1; i <= 6; i++) { const img = new Image(); img.src = `${BASE}/foto${i}.webp`; }
+    // Preload avatar + banner
+    const av = new Image(); av.src = `${BASE}/foto1.webp`;
+    const bn = new Image(); bn.src = `${BASE}/foto5.webp`;
+    // Preload first 4 video metadata (triggers browser cache)
+    for (let i = 1; i <= 4; i++) {
+      const link = document.createElement('link');
+      link.rel = 'preload'; link.as = 'video'; link.href = `${BASE}/video${i}.mp4`;
+      link.setAttribute('crossorigin', 'anonymous');
+      document.head.appendChild(link);
+    }
+    const timer = setTimeout(() => setIsLoading(false), 7000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -720,68 +733,74 @@ const App: React.FC = () => {
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-zinc-950 z-[9999] flex flex-col items-center justify-center select-none">
-        {/* Glow background */}
+        {/* Glow backgrounds */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-pink-500/10 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500/8 rounded-full blur-[100px]" style={{ animation: 'splashGlow 3s ease-in-out infinite alternate' }} />
+          <div className="absolute bottom-1/3 left-1/2 -translate-x-1/2 translate-y-1/2 w-64 h-64 bg-amber-500/5 rounded-full blur-[80px]" style={{ animation: 'splashGlow 4s ease-in-out infinite alternate-reverse' }} />
         </div>
 
-        {/* Avatar with ring */}
-        <div className="relative mb-8 z-10">
-          <div className="w-28 h-28 rounded-full p-1 bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 shadow-[0_0_40px_rgba(236,72,153,0.3)]"
-            style={{ animation: 'spin 3s linear infinite' }}>
+        {/* Avatar — static, no spin */}
+        <div className="relative mb-8 z-10" style={{ animation: 'splashFadeIn 1.5s ease-out' }}>
+          <div className="w-28 h-28 rounded-full p-[3px] bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-400 shadow-[0_0_50px_rgba(236,72,153,0.25)]">
             <div className="w-full h-full rounded-full bg-zinc-950 p-1">
-              <img
-                src={profileData.avatarUrl}
-                alt="Sofia"
-                className="w-full h-full rounded-full object-cover"
-              />
+              <img src={profileData.avatarUrl} alt="Sofia" className="w-full h-full rounded-full object-cover" />
             </div>
           </div>
-          {/* Online badge */}
           <div className="absolute bottom-1 right-1 w-5 h-5 bg-green-500 rounded-full border-[3px] border-zinc-950 shadow-lg" />
         </div>
 
-        {/* Name */}
-        <h1 className="text-white font-black text-2xl tracking-tight mb-1 z-10">Sofia Oliveira</h1>
-        <p className="text-zinc-500 text-sm font-medium mb-8 z-10">@sofiaoliveira</p>
-
-        {/* Fire + Loading text */}
-        <div className="flex items-center gap-2 mb-4 z-10">
-          <span className="text-2xl" style={{ animation: 'bounce 1s ease-in-out infinite' }}>🔥</span>
-          <p className="text-zinc-400 text-sm font-bold uppercase tracking-widest">Carregando conteúdos</p>
-          <span className="text-2xl" style={{ animation: 'bounce 1s ease-in-out infinite 0.2s' }}>🔥</span>
+        {/* Name — appears immediately */}
+        <div className="z-10 text-center" style={{ animation: 'splashFadeIn 1.8s ease-out' }}>
+          <h1 className="text-white font-black text-2xl tracking-tight mb-1">Sofia Oliveira</h1>
+          <p className="text-zinc-600 text-xs font-medium tracking-wide">@sofiaoliveira</p>
         </div>
 
-        {/* Progress bar */}
-        <div className="w-64 h-1.5 bg-zinc-800 rounded-full overflow-hidden z-10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-pink-500 via-rose-500 to-amber-400"
-            style={{
-              animation: 'loadProgress 3.5s ease-out forwards',
-            }}
-          />
+        {/* Loading section — appears after 2s delay */}
+        <div className="z-10 mt-10 flex flex-col items-center" style={{ animation: 'splashLoadingIn 0.8s ease-out 2s both' }}>
+          {/* Dots loader */}
+          <div className="flex items-center gap-1.5 mb-4">
+            <div className="w-2 h-2 rounded-full bg-pink-500" style={{ animation: 'splashDot 1.4s ease-in-out infinite' }} />
+            <div className="w-2 h-2 rounded-full bg-rose-400" style={{ animation: 'splashDot 1.4s ease-in-out 0.2s infinite' }} />
+            <div className="w-2 h-2 rounded-full bg-amber-400" style={{ animation: 'splashDot 1.4s ease-in-out 0.4s infinite' }} />
+          </div>
+
+          <p className="text-zinc-400 text-sm font-bold uppercase tracking-[4px] mb-2">Carregando conteúdos</p>
+          <p className="text-zinc-700 text-[10px] uppercase tracking-[3px] mb-6">preparando tudo pra você</p>
+
+          {/* Progress bar — starts after the 2s delay, fills over 5s */}
+          <div className="w-56 h-[3px] bg-zinc-800/80 rounded-full overflow-hidden">
+            <div className="h-full rounded-full bg-gradient-to-r from-pink-500 via-rose-400 to-amber-400" style={{ animation: 'splashProgress 5s ease-out 2s both' }} />
+          </div>
         </div>
 
-        <p className="text-zinc-600 text-[10px] uppercase tracking-[3px] mt-6 z-10 font-bold">
+        <p className="absolute bottom-8 text-zinc-700 text-[9px] uppercase tracking-[4px] z-10 font-bold" style={{ animation: 'splashFadeIn 2s ease-out 1s both' }}>
           conteúdo privado • acesso exclusivo
         </p>
 
-        {/* Keyframe animations */}
         <style>{`
-          @keyframes loadProgress {
+          @keyframes splashFadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes splashLoadingIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          @keyframes splashGlow {
+            from { opacity: 0.4; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+          }
+          @keyframes splashDot {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.3); }
+          }
+          @keyframes splashProgress {
             0% { width: 0%; }
-            30% { width: 40%; }
-            60% { width: 70%; }
-            85% { width: 90%; }
+            20% { width: 25%; }
+            50% { width: 55%; }
+            75% { width: 80%; }
+            90% { width: 92%; }
             100% { width: 100%; }
-          }
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
           }
         `}</style>
       </div>

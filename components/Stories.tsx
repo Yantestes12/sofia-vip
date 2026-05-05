@@ -38,6 +38,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
   const [progress, setProgress] = useState(0);
   const [showBlurOverlay, setShowBlurOverlay] = useState(false);
   const [showingVazados, setShowingVazados] = useState(false);
+  const [vazadoBlockStep, setVazadoBlockStep] = useState(0); // 0=playing, 1=whatsapp, 2=submundo
   const videoRef = useRef<HTMLVideoElement>(null);
   const storyStartTime = useRef<number>(0);
 
@@ -62,6 +63,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
       setActiveStory(vazadosStories[0]);
       setProgress(0);
       setShowBlurOverlay(false);
+      setVazadoBlockStep(0);
       storyStartTime.current = Date.now();
       return;
     }
@@ -77,17 +79,25 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
     storyStartTime.current = Date.now();
   };
 
-  // Blur trigger: during free period vazados blur after 10s, normal stories after 30s
-  // After free period (isAgeVerified=true): no blur at all
+  // Blur trigger: vazados always block after 10s, normal stories after 30s (free period only)
   useEffect(() => {
-    if (!activeStory || isAgeVerified) return;
+    if (!activeStory) return;
+    if (!showingVazados && isAgeVerified) return; // normal stories: no blur after free period
     const delay = showingVazados ? 10000 : 30000;
     const timer = setTimeout(() => {
       setShowBlurOverlay(true);
+      setVazadoBlockStep(1); // Start at WhatsApp step
       if (videoRef.current) videoRef.current.pause();
     }, delay);
     return () => clearTimeout(timer);
   }, [activeStory, isAgeVerified, showingVazados]);
+
+  // Vazados 2-step: auto-transition from WhatsApp to Submundo after 4s
+  useEffect(() => {
+    if (!showBlurOverlay || !showingVazados || vazadoBlockStep !== 1) return;
+    const timer = setTimeout(() => setVazadoBlockStep(2), 4000);
+    return () => clearTimeout(timer);
+  }, [showBlurOverlay, showingVazados, vazadoBlockStep]);
 
   // Auto-advance timer
   useEffect(() => {
@@ -132,7 +142,7 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
     }
   };
 
-  const closeStory = () => { setActiveStory(null); setShowingVazados(false); setShowBlurOverlay(false); };
+  const closeStory = () => { setActiveStory(null); setShowingVazados(false); setShowBlurOverlay(false); setVazadoBlockStep(0); };
 
   return (
     <>
@@ -255,8 +265,8 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
           <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent z-20 pointer-events-none"></div>
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-20 pointer-events-none"></div>
 
-          {/* Blur overlay - during free period: 'compre no WhatsApp' */}
-          {showBlurOverlay && !isAgeVerified && (
+          {/* Blur overlay - WhatsApp CTA (normal stories during free period + vazados step 1) */}
+          {showBlurOverlay && ((!showingVazados && !isAgeVerified) || (showingVazados && vazadoBlockStep === 1)) && (
             <div className="absolute inset-0 z-[45] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in">
               <div className="bg-zinc-900/95 border border-zinc-700 rounded-2xl p-6 mx-4 max-w-sm text-center shadow-2xl">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-zinc-800 flex items-center justify-center border-2 border-zinc-600">
@@ -275,6 +285,35 @@ const Stories: React.FC<StoriesProps> = ({ isVip, isAgeVerified, onOpenSubscript
                 </a>
                 <button onClick={(e) => { e.stopPropagation(); closeStory(); }}
                   className="w-full py-2.5 text-zinc-500 text-xs font-bold uppercase mt-2 hover:text-zinc-300 transition-colors z-50 relative">
+                  FECHAR
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Vazados Step 2: Submundo CTA */}
+          {showBlurOverlay && showingVazados && vazadoBlockStep === 2 && (
+            <div className="absolute inset-0 z-[45] flex items-center justify-center bg-black/60 backdrop-blur-md animate-fade-in">
+              <div className="bg-zinc-950/95 border-2 border-red-600/50 rounded-2xl p-6 mx-4 max-w-sm text-center shadow-[0_0_60px_rgba(220,38,38,0.3)]">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-600/20 flex items-center justify-center border-2 border-red-500/40">
+                  <ShieldAlert className="w-8 h-8 text-red-500" />
+                </div>
+                <h3 className="text-white font-black text-xl uppercase mb-2 tracking-tight">⚠️ Conteúdos do Submundo</h3>
+                <p className="text-zinc-400 text-sm mb-5 leading-relaxed">
+                  Esses vídeos são <span className="text-red-400 font-bold">restritos</span> e só estão disponíveis na área secreta. Acesse o submundo completo agora.
+                </p>
+                <button
+                  onClick={(e) => { e.stopPropagation(); closeStory(); onOpenVazados(); }}
+                  className="w-full py-4 bg-red-600 hover:bg-red-500 text-white font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(220,38,38,0.4)] active:scale-[0.97] transition-all z-50 relative flex items-center justify-center gap-2 mb-3">
+                  <ShieldAlert className="w-5 h-5" /> ACESSAR SUBMUNDO VAZADO
+                </button>
+                <a href="https://wa.me/" target="_blank" rel="noopener"
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-black uppercase text-xs rounded-xl shadow-lg active:scale-[0.97] transition-transform z-50 relative flex items-center justify-center gap-2">
+                  💬 OU COMPRE NO WHATSAPP
+                </a>
+                <button onClick={(e) => { e.stopPropagation(); closeStory(); }}
+                  className="w-full py-2 text-zinc-600 text-[10px] font-bold uppercase mt-2 hover:text-zinc-400 transition-colors z-50 relative">
                   FECHAR
                 </button>
               </div>

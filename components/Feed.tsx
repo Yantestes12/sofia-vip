@@ -193,13 +193,12 @@ const Feed: React.FC<FeedProps> = ({ onOpenSubscription, onOpenVazados, onReques
     });
   }
 
-  // Sofia Oliveira videos (16 videos — ALL locked in feed, they're heavy to load)
-  for (let i = 0; i <= 15; i++) {
-    const videoUrl = i === 0 ? `${BASE_NEW}/video.mp4` : `${BASE_NEW}/video${i}.mp4`;
+  // Sofia Oliveira videos (15 videos — ALL locked in feed, they're heavy to load)
+  for (let i = 1; i <= 15; i++) {
     allPosts.push({
       id: postId++, creator: 'sofia', name: 'Sofia Oliveira', avatar: AVATAR_SOFIA,
       text: sofiaCaptions[(i + 5) % sofiaCaptions.length],
-      mediaUrl: videoUrl, isVideo: true,
+      mediaUrl: `${BASE_NEW}/video${i}.mp4`, isVideo: true,
       likes: `${(Math.random() * 40 + 5).toFixed(1)}k`, comments: `${Math.floor(Math.random() * 1500 + 200)}`,
       isLocked: true, // Always locked in feed — videos are heavy, send to VIP or WhatsApp
     });

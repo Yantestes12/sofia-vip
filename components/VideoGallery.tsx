@@ -311,23 +311,42 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
   const [videos, setVideos] = useState<VideoMeta[]>([]);
   const [initialized, setInitialized] = useState(false);
   const [showWhatsAppModal, setShowWhatsAppModal] = useState(false);
+  const [sofiaAllReady, setSofiaAllReady] = useState(false);
 
   // How many videos are free per creator
-  // Free period: more free (but long ones still locked via sort). After: fewer free.
   const SOFIA_FREE = isFreePeriod ? 4 : 3;
   const CAMILA_FREE = isFreePeriod ? 3 : 2;
 
+  // Step 1: Initialize Sofia videos first
   useEffect(() => {
-    const sofiaList: VideoMeta[] = Array.from({ length: 16 }, (_, i) => ({
-      id: i,
-      title: videoTitles[i % videoTitles.length],
-      url: `https://secreto.meuprivacy.digital/nataliexking/${i === 0 ? 'video' : `video${i}`}.mp4`,
+    const sofiaList: VideoMeta[] = Array.from({ length: 15 }, (_, i) => ({
+      id: i + 1,
+      title: videoTitles[(i + 1) % videoTitles.length],
+      url: `https://secreto.meuprivacy.digital/nataliexking/video${i + 1}.mp4`,
       duration: 0, durationLabel: '',
       views: VIEWS[i],
-      locked: false, // will be set dynamically after sort
+      locked: false,
       creator: 'sofia' as const,
       ready: false, failed: false, thumbCanvas: null, preloaded: false,
     }));
+
+    setVideos(sofiaList);
+    setInitialized(true);
+  }, [isFreePeriod]);
+
+  // Step 2: Track when Sofia videos are all loaded
+  useEffect(() => {
+    if (!initialized || sofiaAllReady) return;
+    const sofiaVids = videos.filter(v => v.creator === 'sofia');
+    const sofiaComplete = sofiaVids.length > 0 && sofiaVids.every(v => v.ready || v.failed);
+    if (sofiaComplete) setSofiaAllReady(true);
+  }, [videos, initialized, sofiaAllReady]);
+
+  // Step 3: Only add Camila videos AFTER Sofia is 100% done
+  useEffect(() => {
+    if (!sofiaAllReady) return;
+    // Check if Camila already added
+    if (videos.some(v => v.creator === 'camila')) return;
 
     const camilaList: VideoMeta[] = Array.from({ length: 15 }, (_, i) => ({
       id: 100 + i,
@@ -335,14 +354,13 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
       url: `https://secreto.meuprivacy.digital/acesso/video${i + 1}.mp4`,
       duration: 0, durationLabel: '',
       views: VIEWS[16 + i] || VIEWS[i],
-      locked: false, // will be set dynamically after sort
+      locked: false,
       creator: 'camila' as const,
       ready: false, failed: false, thumbCanvas: null, preloaded: false,
     }));
 
-    setVideos([...sofiaList, ...camilaList]);
-    setInitialized(true);
-  }, [isFreePeriod]);
+    setVideos(prev => [...prev, ...camilaList]);
+  }, [sofiaAllReady]);
 
   // Preload first 4 unlocked video files for instant playback
   useEffect(() => {
@@ -411,8 +429,8 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
     const locked = video.locked && !isVip;
     if (video.failed) return null;
 
-    // First 4 of each creator load eagerly
-    const isEager = idx < 4;
+    // Sofia: first 4 eager. Camila: only eager after Sofia is 100% done
+    const isEager = video.creator === 'sofia' ? idx < 4 : (sofiaAllReady && idx < 4);
 
     return (
       <div key={video.id}
@@ -466,7 +484,16 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
     );
   };
 
-  if (!initialized || sofiaReady < 3) {
+  // Timeout fallback: show gallery after 4s max even if thumbs aren't ready
+  const [galleryTimeout, setGalleryTimeout] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setGalleryTimeout(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showGallery = initialized && (sofiaReady >= 4 || galleryTimeout);
+
+  if (!showGallery) {
     return (
       <div className="space-y-5 py-12 flex flex-col items-center justify-center gap-6">
         <div className="relative">
