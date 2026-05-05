@@ -4,10 +4,11 @@ import { Lock, Heart, ImageIcon, X, Gem } from './Icons';
 
 interface PhotoGridProps {
   isVip: boolean;
+  isFreePeriod?: boolean;
   onUnlock: () => void;
 }
 
-const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, onUnlock }) => {
+const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, isFreePeriod, onUnlock }) => {
   const [selectedPhoto, setSelectedPhoto] = useState<number | null>(null);
 
   // 30 photos from Sofia + 30 from Camila
@@ -30,7 +31,11 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, onUnlock }) => {
   const handleClick = (photo: typeof allPhotos[0]) => {
     const locked = photo.isLocked && !isVip;
     if (locked) {
-      onUnlock();
+      if (isFreePeriod) {
+        window.open('https://wa.me/', '_blank');
+      } else {
+        onUnlock();
+      }
     } else {
       setSelectedPhoto(photo.id);
     }
@@ -62,9 +67,9 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, onUnlock }) => {
                 style={locked ? { filter: 'blur(12px)', opacity: 0.5 } : {}} />
               {locked && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
-                  <Lock className="w-5 h-5 text-blue-400 mb-1 drop-shadow-lg" />
-                  <span className="bg-blue-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">
-                    🔐 VERIFICAR IDADE
+                  <Lock className={`w-5 h-5 ${isFreePeriod ? 'text-green-400' : 'text-pink-400'} mb-1 drop-shadow-lg`} />
+                  <span className={`${isFreePeriod ? 'bg-green-500/90' : 'bg-pink-500/90'} text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg`}>
+                    {isFreePeriod ? '💬 COMPRAR NO ZAP' : '😈 VIP — R$ 16,90'}
                   </span>
                 </div>
               )}
@@ -95,9 +100,9 @@ const PhotoGrid: React.FC<PhotoGridProps> = ({ isVip, onUnlock }) => {
                 style={locked ? { filter: 'blur(12px)', opacity: 0.5 } : {}} />
               {locked && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center z-30">
-                  <Lock className="w-5 h-5 text-blue-400 mb-1 drop-shadow-lg" />
-                  <span className="bg-blue-500/90 text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg">
-                    🔐 VERIFICAR IDADE
+                  <Lock className={`w-5 h-5 ${isFreePeriod ? 'text-green-400' : 'text-pink-400'} mb-1 drop-shadow-lg`} />
+                  <span className={`${isFreePeriod ? 'bg-green-500/90' : 'bg-pink-500/90'} text-white px-2 py-0.5 rounded-md font-black text-[7px] uppercase shadow-lg`}>
+                    {isFreePeriod ? '💬 COMPRAR NO ZAP' : '😈 VIP — R$ 16,90'}
                   </span>
                 </div>
               )}

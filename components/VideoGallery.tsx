@@ -383,18 +383,17 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
   }, []);
 
   const handleFail = useCallback((id: number) => {
-    setVideos(prev => prev.map(v => v.id === id ? { ...v, failed: true } : v));
+    setVideos(prev => prev.map(v => v.id === id ? { ...v, failed: true, ready: true } : v));
   }, []);
 
   const handleClick = (video: VideoMeta) => {
-    if (video.failed) return;
     if (video.locked && !isVip) {
       if (isFreePeriod) {
         setShowWhatsAppModal(true);
       } else {
         onUnlock();
       }
-    } else if (video.ready) {
+    } else {
       setSelectedVideo(video.id);
     }
   };
@@ -406,9 +405,8 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
 
   // Sort by duration (shortest first), then apply lock based on position
   const sortAndLock = (list: VideoMeta[], freeCount: number): VideoMeta[] => {
-    const working = list.filter(v => !v.failed);
-    const ready = working.filter(v => v.ready && v.duration > 0);
-    const notReady = working.filter(v => !v.ready || v.duration === 0);
+    const ready = list.filter(v => v.ready && v.duration > 0);
+    const notReady = list.filter(v => !v.ready || v.duration === 0);
     ready.sort((a, b) => a.duration - b.duration);
     // Shortest videos are free, rest are locked
     const sorted = [...ready, ...notReady];
@@ -422,12 +420,11 @@ const VideoGallery: React.FC<VideoGalleryProps> = ({ isVip, isFreePeriod, onUnlo
   const playableVideos = [...sofiaVideos, ...camilaVideos].filter(v => !v.locked && v.ready && !v.failed);
 
   const selected = videos.find(v => v.id === selectedVideo);
-  const sofiaReady = sofiaVideos.filter(v => v.ready).length;
-  const camilaReady = camilaVideos.filter(v => v.ready).length;
+  const sofiaReady = sofiaVideos.filter(v => v.ready || v.failed).length;
+  const camilaReady = camilaVideos.filter(v => v.ready || v.failed).length;
 
   const renderCard = (video: VideoMeta, idx: number, creatorList: VideoMeta[]) => {
     const locked = video.locked && !isVip;
-    if (video.failed) return null;
 
     // Sofia: first 4 eager. Camila: only eager after Sofia is 100% done
     const isEager = video.creator === 'sofia' ? idx < 4 : (sofiaAllReady && idx < 4);
